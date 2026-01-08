@@ -74,21 +74,21 @@ Step 3b (Continue): Select Project & Focus
 
 **If a previous run hung**, kill any stuck processes first:
 ```bash
-pkill -f chromium
-pkill -f chrome
+pkill -f chromium; pkill -f chrome
 ```
 
 ## WSL Browser Handling
 
 **IMPORTANT: This system runs in WSL. Browser handling is different:**
 
-1. **Playwright runs HEADLESS** - For automated screenshots only, no GUI window
+1. **Screenshots use Puppeteer script** - Bash-based, no MCP lock issues
 2. **User preview uses Windows** - Always use `explorer.exe` to open in Windows browser
 
-**NEVER try to open a visible browser window in WSL - it will hang.**
+**NEVER use MCP Playwright tools** - they have persistent lock/install issues.
+**ALWAYS use the bash puppeteer script** at `scripts/capture-screenshot.js`
 
-For screenshots: Use Playwright MCP tools (headless)
-For user preview: Use `explorer.exe "$(wslpath -w [path])"`
+For screenshots: `node scripts/capture-screenshot.js <url> <output-path> [wait-ms]`
+For user preview: `explorer.exe "$(wslpath -w [path])"`
 
 ---
 
@@ -108,14 +108,30 @@ cd /home/wsley/Coding/GameSkillsFrameWork && npm install && npx playwright insta
 ```
 
 This command:
-1. Installs npm dependencies (@playwright/test)
+1. Installs npm dependencies (puppeteer-core, @playwright/test)
 2. Downloads Chromium browser (~165MB first time)
 
-**DO NOT use mcp__playwright__browser_install** - it hangs. Use Bash instead.
+**DO NOT use MCP Playwright tools** - they have persistent lock issues.
 
 WAIT for this to complete. First-time install takes 1-2 minutes.
 If it shows "Chromium downloaded to..." or "up to date" it worked.
 If it fails, STOP and report the error to the user.
+
+#### Step 1.5: Check System Dependencies (WSL ONLY - First time setup)
+
+**If screenshots fail with "libnspr4.so" or similar library errors:**
+
+Tell the user to run this ONE TIME:
+```bash
+sudo apt-get update && sudo apt-get install -y libnspr4 libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libpango-1.0-0 libcairo2 libasound2
+```
+
+Or the shorter version:
+```bash
+sudo npx playwright install-deps chromium
+```
+
+This installs system libraries Chromium needs on Linux/WSL. Only needed once.
 
 #### Step 2: Verify Core Files Exist
 
@@ -123,25 +139,23 @@ If it fails, STOP and report the error to the user.
 Use Glob or Read to verify these files exist:
 - preview/index.html
 - preview/game-renderer.js
+- scripts/capture-screenshot.js
 
 If ANY are missing: STOP and report to user.
 ```
 
-#### Step 3: Test Headless Browser Works
+#### Step 3: Test Screenshot Script Works
 
 ```
 ONLY after Step 1 completes successfully:
 
-Call: mcp__playwright__browser_navigate
-Parameters: url = "about:blank"
+Use Bash to test the screenshot script:
+node /home/wsley/Coding/GameSkillsFrameWork/scripts/capture-screenshot.js file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html /home/wsley/Coding/GameSkillsFrameWork/screenshots/test-init.png 500
 
-This runs HEADLESS (no visible window) - configured in .mcp.json.
+If this fails with "Could not find Chrome": Run Step 1 again (npx playwright install chromium)
+If this succeeds: You'll see "Screenshot saved: ..."
 
-If this fails with "browser not found": Run Step 1 again.
-If this hangs: The MCP may not be in headless mode. Check .mcp.json has PLAYWRIGHT_HEADLESS=true
-If success: Close browser with mcp__playwright__browser_close
-
-NOTE: This test runs invisibly. No window should appear.
+This runs completely headless via bash - no GUI, no MCP, no lock issues.
 ```
 
 #### Step 4: Confirm Ready
@@ -149,9 +163,9 @@ NOTE: This test runs invisibly. No window should appear.
 ```
 Print to user:
 "Prerequisites passed:
-  ✓ Browser installed (via bash)
+  ✓ Dependencies installed
   ✓ Core files found
-  ✓ Browser test successful
+  ✓ Screenshot script working
 
 Ready for project selection..."
 ```
@@ -530,13 +544,27 @@ When analyzing, work through these priorities IN ORDER:
 ---
 
 #### Step 1: Capture Screenshots
+
+**Use the bash puppeteer script (NOT MCP Playwright):**
+
+```bash
+# Create iteration screenshot directory
+mkdir -p projects/[project-name]/sessions/[session-id]/screenshots/iteration-[N]
+
+# Capture initial state (game loaded)
+node scripts/capture-screenshot.js \
+  "file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html" \
+  "projects/[project-name]/sessions/[session-id]/screenshots/iteration-[N]/initial.png" \
+  1000
+
+# Capture after wait (for animations/gameplay)
+node scripts/capture-screenshot.js \
+  "file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html" \
+  "projects/[project-name]/sessions/[session-id]/screenshots/iteration-[N]/gameplay.png" \
+  3000
 ```
-Use visual-testing skill:
-- Capture initial state (game loaded)
-- Capture gameplay state (after interactions)
-- Capture different game states (menu, playing, game over)
-- Save to projects/[project-name]/sessions/[session-id]/screenshots/iteration-[N]/
-```
+
+Then use the Read tool to view the captured screenshots for analysis.
 
 #### Step 2: Deep Analysis (Errors AND Improvements)
 ```
@@ -993,21 +1021,40 @@ If the browser didn't open, manually navigate to:
 
 ## Troubleshooting
 
-### "Browser not installed" or timeout on first run
+### "Could not find Chrome/Chromium" from screenshot script
 
 ```
-Fix: The browser_install step should handle this automatically.
-If it fails, run /setup first to diagnose.
+Fix: The Playwright chromium browser isn't installed.
+Run: npx playwright install chromium
+
+This installs to ~/.cache/ms-playwright/chromium-*/
 ```
 
-### Browser hangs or times out
+### "libnspr4.so" or other missing library errors (WSL)
 
 ```
-Fix: Kill any stuck browser processes first:
-  pkill -f chromium
-  pkill -f chrome
+Fix: System dependencies for Chromium aren't installed.
+Run ONE TIME with sudo:
 
-Then try again.
+sudo apt-get update && sudo apt-get install -y libnspr4 libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libpango-1.0-0 libcairo2 libasound2
+
+Or shorter:
+sudo npx playwright install-deps chromium
+
+This is a one-time setup for WSL.
+```
+
+### Browser hangs or MCP lock issues
+
+```
+This is why we use the bash puppeteer script instead of MCP Playwright.
+
+If you see "Browser is already in use" or similar MCP errors:
+1. DO NOT use MCP Playwright tools
+2. Use: node scripts/capture-screenshot.js <url> <output> [wait]
+
+Kill any stuck processes:
+  pkill -f chromium; pkill -f chrome
 ```
 
 ### "Cannot navigate to preview"

@@ -4,8 +4,10 @@
   "description": "AI-powered autonomous game development framework using visual feedback loops",
   "private": true,
   "scripts": {
-    "setup": "npm install && npx playwright install chromium",
-    "preview": "open preview/index.html || xdg-open preview/index.html"
+    "setup": "npm install && npx playwright install chromium && echo '\n✓ Setup complete!\n\nIf you see library errors on WSL, run:\n  sudo npx playwright install-deps chromium\n'",
+    "setup:deps": "npx playwright install-deps chromium",
+    "preview": "explorer.exe \"$(wslpath -w $(pwd)/preview/index.html)\" 2>/dev/null || open preview/index.html || xdg-open preview/index.html",
+    "screenshot": "node scripts/capture-screenshot.js"
   },
   "dependencies": {
     "@playwright/test": "^1.57.0",
