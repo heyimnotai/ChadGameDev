@@ -46,19 +46,19 @@ Step 3a (New Game): Game Idea
 └─────────────────────────────────────────┘
 
 Step 3b (Continue): Select Project & Focus
-┌─────────────────────────────────────────┐
-│  Select project:                        │
-│  ○ coin-collector (15 iterations, ~45k) │
-│  ○ block-blast (8 iterations, ~24k)     │
-└─────────────────────────────────────────┘
-┌─────────────────────────────────────────┐
-│  What changes do you want?              │
-│                                         │
-│  > [User types specific improvements]   │
-└─────────────────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│  Select project:                            │
+│  ○ coin-collector (15 iters, 45,230 tokens) │
+│  ○ block-blast (8 iters, 24,100 tokens)     │
+└─────────────────────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│  What changes do you want?                  │
+│                                             │
+│  > [User types specific improvements]       │
+└─────────────────────────────────────────────┘
 ```
 
-Token counts show cumulative usage across all sessions for that project.
+Token counts are ACTUAL usage (captured from sub-agent output), cumulative across all sessions.
 
 ---
 
@@ -204,14 +204,14 @@ First, list existing projects and gather stats:
 ls -d projects/*/ 2>/dev/null | xargs -I {} basename {}
 ```
 
-For each project, read:
-- `projects/[name]/project.json` for iterations and dates
-- Sum tokens from `projects/[name]/sessions/*/stats.json` files
+For each project, read `projects/[name]/project.json` which contains:
+- `totalIterations` - cumulative iteration count
+- `totalTokens` - cumulative actual token usage
 
-Calculate total tokens across all sessions:
 ```bash
-# Example: sum estimatedTokens from all stats.json files
-cat projects/[name]/sessions/*/stats.json 2>/dev/null | grep estimatedTokens | awk -F: '{sum+=$2} END {print sum}'
+# Read project.json for each project
+cat projects/[name]/project.json
+# Use totalIterations and totalTokens fields
 ```
 
 Then call AskUserQuestion with token info in description:
@@ -223,14 +223,14 @@ Then call AskUserQuestion with token info in description:
     "header": "Project",
     "multiSelect": false,
     "options": [
-      {"label": "coin-collector", "description": "15 iterations, ~45k tokens"},
-      {"label": "block-blast", "description": "8 iterations, ~24k tokens"}
+      {"label": "coin-collector", "description": "15 iterations, 45,230 tokens"},
+      {"label": "block-blast", "description": "8 iterations, 24,100 tokens"}
     ]
   }]
 }
 ```
 
-**Format: "[X] iterations, ~[Y]k tokens"**
+**Format: "[X] iterations, [Y] tokens"** (actual counts from project.json totalTokens)
 
 (Build options dynamically from actual projects found)
 
@@ -331,10 +331,16 @@ This is the key to hands-off operation: ONE permission prompt, then full automat
 
 #### Spawn the Loop Runner
 
-**Use Bash to spawn a SINGLE sub-agent that runs the entire loop:**
+**Use Bash to spawn a SINGLE sub-agent and capture token usage:**
 
 ```bash
-cd /home/wsley/Coding/GameSkillsFrameWork && claude --dangerously-skip-permissions -p "[LOOP_RUNNER_PROMPT]"
+cd /home/wsley/Coding/GameSkillsFrameWork && claude --dangerously-skip-permissions -p "[LOOP_RUNNER_PROMPT]" 2>&1 | tee projects/[project-name]/sessions/[session-id]/output.log
+```
+
+After the sub-agent completes, parse actual tokens from the output:
+```bash
+# Extract token count from Claude's output (format: "Total tokens: X")
+grep -oP 'Total tokens: \K[0-9,]+' projects/[project-name]/sessions/[session-id]/output.log | tr -d ',' > projects/[project-name]/sessions/[session-id]/tokens.txt
 ```
 
 The prompt must include ALL context needed to run autonomously:
@@ -398,32 +404,20 @@ Repeat until all [N] iterations complete
 - Every interaction feels satisfying
 - Always find something to improve
 
-## Token Tracking
-After EACH iteration, update the stats file:
-```bash
-# Write/update stats after each iteration
-cat > projects/[project-name]/sessions/[session-id]/stats.json << 'STATS'
-{
-  "iterationsCompleted": X,
-  "totalIterations": [N],
-  "estimatedTokens": [estimate based on work done - roughly 3000-5000 per iteration]
-}
-STATS
-```
-
 ## When Done
 1. Copy final game: cp preview/game.js projects/[project-name]/game.js
-2. Update final stats with total tokens estimate
-3. Print completion summary INCLUDING estimated tokens used
-4. Print test URL: file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html
-5. Exit
+2. Print completion summary
+3. Print test URL: file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html
+4. Exit
 
 Print format:
 ```
-═══ COMPLETE ═══
+═══ LOOP COMPLETE ═══
 Iterations: [N]/[N]
-Estimated tokens: ~[X]k
+Game saved to: projects/[project-name]/game.js
 ```
+
+(Actual token count will be captured by orchestrator from this output)
 ```
 
 ---
@@ -481,32 +475,21 @@ Repeat until all [N] iterations complete
 - Every interaction feels satisfying
 - Always find something to improve
 
-## Token Tracking
-After EACH iteration, update the stats file:
-```bash
-cat > projects/[project-name]/sessions/[session-id]/stats.json << 'STATS'
-{
-  "iterationsCompleted": X,
-  "totalIterations": [N],
-  "estimatedTokens": [roughly 3000-5000 per iteration]
-}
-STATS
-```
-
 ## When Done
 1. Copy final game: cp preview/game.js projects/[project-name]/game.js
-2. Update project.json with cumulative token count
-3. Print completion summary with tokens
-4. Print test URL: file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html
-5. Open preview: explorer.exe "$(wslpath -w /home/wsley/Coding/GameSkillsFrameWork/preview/index.html)"
-6. Exit
+2. Print completion summary
+3. Print test URL: file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html
+4. Open preview: explorer.exe "$(wslpath -w /home/wsley/Coding/GameSkillsFrameWork/preview/index.html)"
+5. Exit
 
 Print format:
 ```
-═══ COMPLETE ═══
+═══ LOOP COMPLETE ═══
 Iterations: [N]/[N]
-Estimated tokens: ~[X]k
+Game saved to: projects/[project-name]/game.js
 ```
+
+(Actual token count will be captured by orchestrator from this output)
 ```
 
 ---
@@ -524,23 +507,51 @@ The sub-agent will:
 
 When it returns, proceed to Phase 5.
 
-### Phase 5: Completion
+### Phase 5: Completion & Token Tally
 
-**The sub-agent handles all completion tasks automatically:**
-- Saves game to project folder
-- Prints completion summary
-- Opens preview in browser
-- Displays test URL
+**When the bash command returns, the orchestrator MUST:**
 
-**When the bash command returns, the orchestrator (you) should:**
+1. **Extract actual token count from output log:**
+```bash
+# Parse tokens from Claude's output
+TOKENS=$(grep -oP '(?:Total tokens|tokens used): \K[0-9,]+' projects/[project-name]/sessions/[session-id]/output.log | tail -1 | tr -d ',')
+echo "Session used $TOKENS tokens"
+```
 
-1. Confirm to the user that the loop completed
-2. If the sub-agent output isn't visible, print the test URL:
+2. **Update project.json with actual tokens:**
+```bash
+# Read current totalTokens, add session tokens, write back
+# Use jq or manual JSON update
+```
+
+Or have the orchestrator read the log and update:
+```
+Read projects/[project-name]/sessions/[session-id]/output.log
+Find token count in output
+Update projects/[project-name]/project.json totalTokens field
+```
+
+3. **Write session stats with actual tokens:**
+```bash
+cat > projects/[project-name]/sessions/[session-id]/stats.json << EOF
+{
+  "completedAt": "$(date -Iseconds)",
+  "iterations": [N],
+  "tokensUsed": $TOKENS
+}
+EOF
+```
+
+4. **Display completion with ACTUAL token count:**
 
 ```
 ═══════════════════════════════════════════════════════════════
 
 GAME COMPLETE: [project-name]
+
+Session: [N] iterations
+Tokens used: [ACTUAL_COUNT] (this session)
+Total project tokens: [CUMULATIVE]
 
 ► TEST YOUR GAME:
 file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html
