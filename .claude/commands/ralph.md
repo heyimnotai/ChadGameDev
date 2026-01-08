@@ -117,75 +117,186 @@ Proceeding to game generation..."
    - Use Playwright to navigate to preview
    - Wait for initial render
 
-### Phase 3: Iteration Loop
+### Phase 3: Continuous Improvement Loop
 
-For each iteration (1 to maxIterations):
+**IMPORTANT: Ralph does NOT stop when errors are fixed. Ralph continuously improves the game for ALL iterations.**
+
+The loop runs for ALL iterations (1 to maxIterations). Each iteration either:
+1. Fixes errors (if any exist), OR
+2. Improves the game (if no errors)
+
+**Philosophy: "Is there anything that could be better about this game?"**
+- If YES → Make improvements
+- If NO → Only then consider stopping early (rare)
+
+---
+
+#### Improvement Priority System
+
+When analyzing, work through these priorities IN ORDER:
+
+| Priority | Category | Focus | Examples |
+|----------|----------|-------|----------|
+| P0 | **Critical Errors** | Game-breaking bugs | Blank screen, crashes, no touch response |
+| P1 | **Functional Bugs** | Things that don't work | Score not updating, wrong collision |
+| P2 | **Visual Issues** | Layout/display problems | Safe area violations, clipping, alignment |
+| P3 | **Polish & Juice** | Game feel improvements | Better animations, particles, screen shake |
+| P4 | **Mechanics** | Gameplay additions | New obstacles, power-ups, combo systems |
+| P5 | **Retention Optimization** | Player psychology | Reward timing, difficulty curve, session hooks |
+
+**ALWAYS find something to improve.** Even a "perfect" game can have:
+- Smoother animations
+- More satisfying sound cues
+- Better particle effects
+- Tighter difficulty curves
+- More rewarding feedback loops
+
+---
 
 #### Step 1: Capture Screenshots
 ```
 Use visual-testing skill:
-- Capture initial state
-- Simulate interactions (tap center of game area)
-- Capture post-interaction state
+- Capture initial state (game loaded)
+- Capture gameplay state (after interactions)
+- Capture different game states (menu, playing, game over)
 - Save to screenshots/session-[ID]/iteration-[N]/
 ```
 
-#### Step 2: Analyze Screenshots
+#### Step 2: Deep Analysis (Errors AND Improvements)
 ```
-Examine each screenshot for:
-- Quality gate violations
-- Visual issues
-- Game logic problems
-- Polish opportunities
+Examine each screenshot through TWO lenses:
 
-Generate structured analysis with severity ratings.
-```
+LENS 1 - ERROR DETECTION (P0-P2):
+- Quality gate violations?
+- Visual bugs or glitches?
+- Functional problems?
+- Layout issues?
 
-#### Step 3: Consult Patches
-```
-For each issue found:
-- Search patches.md by symptom
-- If match found: use documented solution
-- If no match: prepare to debug and document
-```
+LENS 2 - IMPROVEMENT OPPORTUNITIES (P3-P5):
+- Could animations be smoother/juicier?
+- Are particle effects satisfying enough?
+- Is the feedback loop tight?
+- Could difficulty curve be better?
+- Are rewards timed for maximum dopamine?
+- Would screen shake add impact?
+- Is the pacing optimal for retention?
+- Could there be more variety?
+- Are touch targets satisfying to hit?
+- Does the game "feel" good?
 
-#### Step 4: Self-Prompt
-```
-Use self-prompter skill to generate next iteration prompt:
-- List issues with priorities
-- Include patch-suggested fixes
-- Note what's working (preserve)
-- Define verification steps
+If no errors found, you MUST find improvements.
+Ask: "What would make a player want to play this for 30 more seconds?"
 ```
 
-#### Step 5: Apply Fixes
+#### Step 3: Consult Skills for Improvements
+```
+Based on what you want to improve, invoke relevant skills:
+
+For Polish (P3):
+- juice-orchestrator: Overall game feel
+- particle-effects: Visual effects
+- animation-system: Smooth animations
+- screen-shake-impact: Impact feedback
+- haptic-optimizer: Tactile feedback
+- audio-designer: Sound design
+
+For Mechanics (P4):
+- core-loop-architect: Gameplay loop refinement
+- difficulty-tuner: Challenge balancing
+- progression-system: Advancement mechanics
+
+For Retention (P5):
+- dopamine-optimizer: Reward timing
+- reward-scheduler: Variable rewards
+- session-designer: Session length optimization
+- retention-engineer: Long-term hooks
+- onboarding-architect: First experience
+```
+
+#### Step 4: Consult Patches
+```
+For errors: Search patches.md by symptom
+For improvements: Check if similar enhancements documented
+
+If implementing something new that works well, prepare to document it.
+```
+
+#### Step 5: Generate Improvement Plan
+```
+Create a prioritized list:
+
+## Iteration [N] Plan
+
+### Errors to Fix (if any)
+1. [P0/P1/P2] Description - specific fix
+
+### Improvements to Make
+1. [P3] Add screen shake on coin collect - 3px, 100ms
+2. [P4] Add combo multiplier for rapid taps
+3. [P5] Implement near-miss reward for close calls
+
+### Retention Check
+- [ ] Does collecting feel satisfying?
+- [ ] Is there a reason to play "one more time"?
+- [ ] Are rewards unpredictable enough?
+- [ ] Is difficulty ramping appropriately?
+```
+
+#### Step 6: Apply Changes
 ```
 Make code changes:
-- One fix at a time
-- Focus on highest priority first
-- Max 3 issues per iteration
+- Fix errors first (P0-P2)
+- Then add improvements (P3-P5)
+- Max 3 changes per iteration to keep progress trackable
+- Test each change visually
 ```
 
-#### Step 6: Check Quality Gates
+#### Step 7: Verify Quality Gates
 ```
 Evaluate all gates:
 - [ ] Renders: Canvas visible, no errors
 - [ ] Layout: Safe areas respected
-- [ ] Visual: Colors, FPS, typography
-- [ ] Interaction: Touch works
-- [ ] Logic: Score, states, conditions
+- [ ] Visual: Colors, FPS, typography correct
+- [ ] Interaction: Touch works with good feedback
+- [ ] Logic: Score, states, conditions work
 
-If ALL pass → Output <promise>COMPLETE</promise>
-If any fail → Continue to next iteration
+Gates passing does NOT mean loop ends.
+Gates passing means you can focus on P3-P5 improvements.
 ```
 
-#### Step 7: Update State
+#### Step 8: Retention Self-Check
+```
+Ask these questions EVERY iteration:
+
+1. "Would I tap again?" - Is action satisfying?
+2. "What's the hook?" - Why keep playing?
+3. "Where's the dopamine?" - When do players feel good?
+4. "Is there anticipation?" - Do players look forward to something?
+5. "Is there surprise?" - Are there unexpected delights?
+
+If any answer is weak, that's your next improvement target.
+```
+
+#### Step 9: Update State & Continue
 ```
 - Log iteration to analysis-log.md
 - Update session-state.json
-- Create any new patches for solved problems
-- Update current-prompt.md for next iteration
+- Document new patterns to patches.md
+- Generate next iteration prompt
+- CONTINUE TO NEXT ITERATION (don't stop just because gates pass)
 ```
+
+---
+
+#### When Does the Loop Actually End?
+
+The loop ends when:
+1. **Max iterations reached** (most common - this is expected!)
+2. **User interrupts** (they've seen enough)
+3. **Game is truly optimized** (rare - only if you genuinely cannot think of ANY improvement)
+
+**The loop should almost always run all iterations.**
+Use all the iterations the user gave you to make the game as good as possible.
 
 ### Phase 4: Completion
 
@@ -260,28 +371,36 @@ The loop maintains state in `ralph/session-state.json`:
 
 ## Stop Conditions
 
-The loop stops when ANY of these are true:
-1. All quality gates pass
-2. Max iterations reached
-3. User interrupts
-4. No issues found (nothing to fix)
+**Ralph is designed to use ALL iterations.** Early stopping is rare.
+
+The loop stops when:
+1. **Max iterations reached** (EXPECTED - use all iterations to maximize quality)
+2. **User interrupts** (they've seen enough)
+3. **Game is truly perfect** (RARE - only if you genuinely cannot improve anything)
+
+**The loop does NOT stop just because:**
+- Quality gates pass (that just means focus shifts to improvements)
+- No errors found (that means focus on polish, mechanics, retention)
+- The game "works" (working ≠ optimized for player enjoyment)
+
+**Remember:** A game that "works" can always be MORE satisfying, MORE juicy, MORE addictive.
 
 ---
 
 ## Output Format
 
-### During Iteration
+### During Iteration (Error Fixing Phase)
 ```
-═══ Ralph Iteration 3/10 ═══
+═══ Ralph Iteration 2/10 ═══
 
 Capturing screenshots...
   ✓ initial.png
   ✓ gameplay.png
 
-Analyzing...
+Analyzing (Errors)...
   Found 2 issues:
-  - [CRITICAL] Particles not visible
-  - [HIGH] Score overlaps safe area
+  - [P0] Particles not visible
+  - [P2] Score overlaps safe area
 
 Consulting patches...
   ✓ PATCH-002 matches "Particles not visible"
@@ -290,39 +409,96 @@ Applying fixes...
   1. Added emitter.start() call
   2. Moved score label to y=180
 
-Verifying...
-  Quality Gates: 4/5 passed
-  - [ ] Visual: FPS dropped to 45
+Quality Gates: 4/5 passed
+  ✗ Visual: FPS dropped to 45
 
-Generating next prompt...
+Continuing to iteration 3...
 ```
 
-### On Completion
+### During Iteration (Improvement Phase)
+```
+═══ Ralph Iteration 6/10 ═══
+
+Capturing screenshots...
+  ✓ initial.png
+  ✓ gameplay.png
+  ✓ game-over.png
+
+Analyzing (Improvements)...
+  Quality Gates: 5/5 ✓
+
+  Improvement Opportunities:
+  - [P3] Screen shake could be juicier
+  - [P3] Coin collect particles need more "pop"
+  - [P4] No combo system - rapid taps unrewarded
+  - [P5] Difficulty doesn't ramp - gets boring
+
+Retention Check:
+  ✓ Tap feels satisfying
+  ✗ No "one more time" hook
+  ✗ Rewards too predictable
+
+Improvement Plan:
+  1. [P3] Increase screen shake: 3px → 5px, add rotation
+  2. [P4] Add combo multiplier (2x, 3x, 5x) for rapid taps
+  3. [P5] Implement difficulty ramp: spawn rate increases
+
+Applying improvements...
+  ✓ Screen shake enhanced
+  ✓ Combo system added
+  ✓ Difficulty curve implemented
+
+Continuing to iteration 7...
+```
+
+### On Completion (All Iterations Used)
 ```
 ═══ Ralph Complete ═══
 
 Session: abc123
-Iterations: 7/10
-Status: All quality gates passed
+Iterations: 10/10 (all used)
+Status: Fully optimized
 
-Issues: 12 found, 12 fixed
-Patches: 3 consulted, 2 created
+Error Fixes: 4 bugs fixed
+Improvements Made: 18 enhancements
 
-Final Quality Gates:
+Quality Gates: All passing
   ✓ Renders
   ✓ Layout
   ✓ Visual
   ✓ Interaction
   ✓ Logic
 
+Improvements by Category:
+  Polish (P3): 8 enhancements
+    - Screen shake on all impacts
+    - Particle burst on collect
+    - Smooth easing on animations
+    - ...
+
+  Mechanics (P4): 5 additions
+    - Combo multiplier system
+    - Power-up spawns
+    - Near-miss detection
+    - ...
+
+  Retention (P5): 5 optimizations
+    - Progressive difficulty
+    - Variable reward timing
+    - Session length hooks
+    - ...
+
 New Patches Created:
-  - PATCH-011: Animation timing on game over
-  - PATCH-012: Coin spawn rate too high
+  - PATCH-011: Screen shake rotation pattern
+  - PATCH-012: Combo timing window (300ms)
 
 Opening game in browser for testing...
   ✓ Preview launched
 
 Game preview opened in your browser. Test it out!
+
+The game has been optimized for maximum player retention and enjoyment.
+All 10 iterations were used to polish every aspect.
 
 If the browser didn't open, manually navigate to:
 \\wsl.localhost\Ubuntu\home\wsley\Coding\GameSkillsFrameWork\preview\index.html
@@ -334,11 +510,13 @@ If the browser didn't open, manually navigate to:
 
 ## Tips
 
-1. **Start small** - 5 iterations for simple games
-2. **Be specific** - Clear game descriptions help
-3. **Check patches first** - Known solutions save time
-4. **Trust the loop** - Let it iterate
-5. **Review screenshots** - Visual truth > assumptions
+1. **Use more iterations** - 10+ for best results, each iteration improves the game
+2. **Be specific** - Clear game descriptions help initial generation
+3. **Trust the loop** - Let it use ALL iterations, don't interrupt early
+4. **Think retention** - "Would a player play this for 5 more minutes?"
+5. **Juice everything** - Every action should feel satisfying
+6. **Review screenshots** - Visual truth reveals improvement opportunities
+7. **Check patches** - Learn from previous sessions' discoveries
 
 ---
 
