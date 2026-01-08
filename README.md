@@ -21,11 +21,64 @@ User Prompt → Generate Code → Preview → Screenshot → Analyze → Self-Pr
 - **Quality Gates** - 5 gates (renders, layout, visual, interaction, logic) must pass
 - **MCP Integration** - Uses Playwright for screenshots, XcodeBuildMCP for native builds
 
+## Setup (Required Before First Run)
+
+### Step 1: Clone and Install Dependencies
+
+```bash
+git clone https://github.com/heyimnotai/VisualRalphLoop.git
+cd VisualRalphLoop
+npm install
+npx playwright install chromium
+```
+
+### Step 2: Install System Dependencies (WSL/Linux Only)
+
+**This is required on WSL/Linux for Chromium to work:**
+
+```bash
+sudo npx playwright install-deps chromium
+```
+
+Or manually:
+```bash
+sudo apt-get update && sudo apt-get install -y \
+  libnspr4 libnss3 libatk1.0-0 libatk-bridge2.0-0 \
+  libcups2 libxcomposite1 libxdamage1 libxrandr2 \
+  libgbm1 libpango-1.0-0 libcairo2 libasound2
+```
+
+### Step 3: Verify Setup
+
+```bash
+# Test that screenshots work
+node scripts/capture-screenshot.js \
+  "file://$(pwd)/preview/index.html" \
+  "screenshots/test.png" \
+  1000
+```
+
+You should see: `Screenshot saved: screenshots/test.png`
+
+### Step 4: Run Claude Code
+
+For fully hands-off operation (recommended):
+```bash
+claude --dangerously-skip-permissions
+```
+
+Then run:
+```
+/ralph
+```
+
+---
+
 ## Quick Start
 
 ```bash
-# Run the Ralph loop with 5 iterations
-/ralph 5 "tap to collect coins with particle effects"
+# Run the Ralph loop (interactive mode)
+/ralph
 
 # Or use the commands separately
 /preview    # Generate and open HTML5 preview
@@ -143,6 +196,45 @@ MCP servers are configured in `.mcp.json`:
   }
 }
 ```
+
+## Troubleshooting
+
+### "libnspr4.so" or missing library errors
+
+You haven't installed system dependencies. Run:
+```bash
+sudo npx playwright install-deps chromium
+```
+
+### "Could not find Chrome/Chromium"
+
+Playwright browser not installed. Run:
+```bash
+npx playwright install chromium
+```
+
+### Browser hangs or MCP lock errors
+
+The system uses a bash puppeteer script instead of MCP Playwright to avoid lock issues. If you see "Browser is already in use" errors from MCP, the system will automatically use the bash approach instead.
+
+Kill stuck processes:
+```bash
+pkill -f chromium; pkill -f chrome
+```
+
+### Screenshots show blank page
+
+Check for JavaScript errors:
+```bash
+node scripts/capture-screenshot.js "file://$(pwd)/preview/index.html" test.png 2000
+```
+Then check `test-console.txt` for errors.
+
+### WSL: Browser window opens and hangs
+
+Make sure `.mcp.json` has `PLAYWRIGHT_HEADLESS` set to `true`. The system uses headless screenshots and `explorer.exe` for user preview.
+
+---
 
 ## Inspiration
 
