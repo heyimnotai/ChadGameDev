@@ -48,8 +48,8 @@ Step 3a (New Game): Game Idea
 Step 3b (Continue): Select Project & Focus
 ┌─────────────────────────────────────────┐
 │  Select project:                        │
-│  ○ coin-collector (15 iterations)       │
-│  ○ block-blast (8 iterations)           │
+│  ○ coin-collector (15 iterations, ~45k) │
+│  ○ block-blast (8 iterations, ~24k)     │
 └─────────────────────────────────────────┘
 ┌─────────────────────────────────────────┐
 │  What changes do you want?              │
@@ -57,6 +57,8 @@ Step 3b (Continue): Select Project & Focus
 │  > [User types specific improvements]   │
 └─────────────────────────────────────────┘
 ```
+
+Token counts show cumulative usage across all sessions for that project.
 
 ---
 
@@ -182,9 +184,12 @@ Create `projects/[project-name]/project.json`:
   "lastModified": "[ISO timestamp]",
   "totalIterations": 0,
   "totalSessions": 0,
+  "totalTokens": 0,
   "status": "in-development"
 }
 ```
+
+`totalTokens` is cumulative across all sessions - updated by loop runner on completion.
 
 ---
 
@@ -194,12 +199,22 @@ If user selected "Continue Project":
 
 **Question 3B: Select Project (USE AskUserQuestion TOOL)**
 
-First, list existing projects:
+First, list existing projects and gather stats:
 ```bash
 ls -d projects/*/ 2>/dev/null | xargs -I {} basename {}
 ```
 
-Read each `project.json` for status, then call AskUserQuestion:
+For each project, read:
+- `projects/[name]/project.json` for iterations and dates
+- Sum tokens from `projects/[name]/sessions/*/stats.json` files
+
+Calculate total tokens across all sessions:
+```bash
+# Example: sum estimatedTokens from all stats.json files
+cat projects/[name]/sessions/*/stats.json 2>/dev/null | grep estimatedTokens | awk -F: '{sum+=$2} END {print sum}'
+```
+
+Then call AskUserQuestion with token info in description:
 
 ```json
 {
@@ -208,12 +223,14 @@ Read each `project.json` for status, then call AskUserQuestion:
     "header": "Project",
     "multiSelect": false,
     "options": [
-      {"label": "coin-collector", "description": "15 iterations, last: Jan 5"},
-      {"label": "block-blast", "description": "8 iterations, last: Jan 3"}
+      {"label": "coin-collector", "description": "15 iterations, ~45k tokens"},
+      {"label": "block-blast", "description": "8 iterations, ~24k tokens"}
     ]
   }]
 }
 ```
+
+**Format: "[X] iterations, ~[Y]k tokens"**
 
 (Build options dynamically from actual projects found)
 
@@ -381,11 +398,32 @@ Repeat until all [N] iterations complete
 - Every interaction feels satisfying
 - Always find something to improve
 
+## Token Tracking
+After EACH iteration, update the stats file:
+```bash
+# Write/update stats after each iteration
+cat > projects/[project-name]/sessions/[session-id]/stats.json << 'STATS'
+{
+  "iterationsCompleted": X,
+  "totalIterations": [N],
+  "estimatedTokens": [estimate based on work done - roughly 3000-5000 per iteration]
+}
+STATS
+```
+
 ## When Done
 1. Copy final game: cp preview/game.js projects/[project-name]/game.js
-2. Print completion summary
-3. Print test URL: file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html
-4. Exit
+2. Update final stats with total tokens estimate
+3. Print completion summary INCLUDING estimated tokens used
+4. Print test URL: file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html
+5. Exit
+
+Print format:
+```
+═══ COMPLETE ═══
+Iterations: [N]/[N]
+Estimated tokens: ~[X]k
+```
 ```
 
 ---
@@ -443,12 +481,32 @@ Repeat until all [N] iterations complete
 - Every interaction feels satisfying
 - Always find something to improve
 
+## Token Tracking
+After EACH iteration, update the stats file:
+```bash
+cat > projects/[project-name]/sessions/[session-id]/stats.json << 'STATS'
+{
+  "iterationsCompleted": X,
+  "totalIterations": [N],
+  "estimatedTokens": [roughly 3000-5000 per iteration]
+}
+STATS
+```
+
 ## When Done
 1. Copy final game: cp preview/game.js projects/[project-name]/game.js
-2. Print completion summary with all improvements made
-3. Print test URL: file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html
-4. Open preview: explorer.exe "$(wslpath -w /home/wsley/Coding/GameSkillsFrameWork/preview/index.html)"
-5. Exit
+2. Update project.json with cumulative token count
+3. Print completion summary with tokens
+4. Print test URL: file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html
+5. Open preview: explorer.exe "$(wslpath -w /home/wsley/Coding/GameSkillsFrameWork/preview/index.html)"
+6. Exit
+
+Print format:
+```
+═══ COMPLETE ═══
+Iterations: [N]/[N]
+Estimated tokens: ~[X]k
+```
 ```
 
 ---
