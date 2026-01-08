@@ -4,11 +4,24 @@ Run the Visual Ralph Loop to autonomously develop and polish games through itera
 
 ## Usage
 
+**For fully hands-off operation, run Claude with skip-permissions:**
+
+```bash
+claude --dangerously-skip-permissions
+```
+
+Then run:
 ```
 /ralph
 ```
 
-Ralph will guide you through interactive choices. No arguments needed.
+This eliminates permission prompts during project setup and development.
+
+**Standard mode** (with permission prompts):
+```
+claude
+/ralph
+```
 
 ---
 

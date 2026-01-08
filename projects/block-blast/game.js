@@ -88,13 +88,6 @@ class BlockBlast {
         this.particles.particleSpeed = 400;
         this.particles.particleSpeedRange = 200;
 
-        // Screen shake
-        this.screenShake = { x: 0, y: 0, intensity: 0, duration: 0, elapsed: 0 };
-
-        // Ghost preview state
-        this.ghostPosition = null;
-        this.ghostValid = false;
-
         this.setupGame();
     }
 
@@ -418,22 +411,16 @@ class BlockBlast {
             const bonus = linesCleared > 1 ? linesCleared * 50 : 0;
             this.addScore(cellsToClear.size * 20 + bonus);
 
-            // Screen shake - intensity based on lines cleared
-            const shakeIntensity = linesCleared > 1 ? 10 : 5;
-            this.triggerScreenShake(shakeIntensity, 200);
-
-            // Clear cells with colored particles
+            // Clear cells
             for (const key of cellsToClear) {
                 const [x, y] = key.split(',').map(Number);
-                const cellColor = this.grid[y][x]; // Get color before clearing
                 this.grid[y][x] = null;
 
-                // Particles at cleared cell - use block color
+                // Particles at cleared cell
                 this.particles.position = new Vector2(
                     this.gridX + x * this.cellSize + this.cellSize / 2,
                     this.gridY + y * this.cellSize + this.cellSize / 2
                 );
-                this.particles.particleColor = cellColor || Color.yellow;
                 this.particles.burst(5);
             }
 
@@ -509,27 +496,6 @@ class BlockBlast {
         this.scene.run(this.scoreLabel, pop);
     }
 
-    triggerScreenShake(intensity, duration) {
-        this.screenShake.intensity = intensity;
-        this.screenShake.duration = duration;
-        this.screenShake.elapsed = 0;
-    }
-
-    updateScreenShake(deltaTime) {
-        if (this.screenShake.elapsed < this.screenShake.duration) {
-            this.screenShake.elapsed += deltaTime;
-            const progress = this.screenShake.elapsed / this.screenShake.duration;
-            const decay = 1 - progress;
-            const currentIntensity = this.screenShake.intensity * decay;
-
-            this.screenShake.x = (Math.random() - 0.5) * 2 * currentIntensity;
-            this.screenShake.y = (Math.random() - 0.5) * 2 * currentIntensity;
-        } else {
-            this.screenShake.x = 0;
-            this.screenShake.y = 0;
-        }
-    }
-
     handleTouch(type, x, y) {
         if (this.gameOver) {
             if (type === 'began') {
@@ -562,14 +528,6 @@ class BlockBlast {
         } else if (type === 'moved' && this.selectedBlock) {
             // Move block with touch
             this.selectedBlock.node.position = touchPoint.add(this.dragOffset);
-
-            // Update ghost preview position
-            const gridPos = this.getGridPosition(
-                this.selectedBlock.node.position.x,
-                this.selectedBlock.node.position.y
-            );
-            this.ghostPosition = gridPos;
-            this.ghostValid = this.canPlaceBlock(this.selectedBlock.shape, gridPos.x, gridPos.y);
         } else if (type === 'ended' && this.selectedBlock) {
             // Try to place block
             const gridPos = this.getGridPosition(
@@ -590,67 +548,16 @@ class BlockBlast {
             }
 
             this.selectedBlock = null;
-            this.ghostPosition = null;
         }
     }
 
     update(deltaTime) {
         this.scene.update(deltaTime);
         this.particles.update(deltaTime);
-        this.updateScreenShake(deltaTime);
     }
 
     render(ctx, width, height) {
-        // Apply screen shake offset
-        ctx.save();
-        ctx.translate(this.screenShake.x, this.screenShake.y);
-
         this.scene.render(ctx, width, height);
-
-        // Draw ghost preview when dragging
-        if (this.selectedBlock && this.ghostPosition) {
-            const { shape, color } = this.selectedBlock;
-            ctx.globalAlpha = 0.3;
-
-            for (const [dx, dy] of shape) {
-                const gx = this.ghostPosition.x + dx;
-                const gy = this.ghostPosition.y + dy;
-
-                if (gx >= 0 && gx < this.gridSize && gy >= 0 && gy < this.gridSize) {
-                    const cellX = this.gridX + gx * this.cellSize + this.cellSize / 2;
-                    const cellY = this.gridY + gy * this.cellSize + this.cellSize / 2;
-                    const cellW = this.cellSize - 8;
-                    const cellH = this.cellSize - 8;
-
-                    // Draw ghost cell - tint red if invalid
-                    if (this.ghostValid) {
-                        ctx.fillStyle = color.toString();
-                    } else {
-                        ctx.fillStyle = Color.red.withOpacity(0.5).toString();
-                    }
-
-                    // Draw rounded rectangle
-                    const x = cellX - cellW / 2;
-                    const y = cellY - cellH / 2;
-                    const r = 10;
-                    ctx.beginPath();
-                    ctx.moveTo(x + r, y);
-                    ctx.lineTo(x + cellW - r, y);
-                    ctx.quadraticCurveTo(x + cellW, y, x + cellW, y + r);
-                    ctx.lineTo(x + cellW, y + cellH - r);
-                    ctx.quadraticCurveTo(x + cellW, y + cellH, x + cellW - r, y + cellH);
-                    ctx.lineTo(x + r, y + cellH);
-                    ctx.quadraticCurveTo(x, y + cellH, x, y + cellH - r);
-                    ctx.lineTo(x, y + r);
-                    ctx.quadraticCurveTo(x, y, x + r, y);
-                    ctx.closePath();
-                    ctx.fill();
-                }
-            }
-            ctx.globalAlpha = 1;
-        }
-
-        ctx.restore();
     }
 
     getScore() {
