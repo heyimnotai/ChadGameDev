@@ -15,50 +15,83 @@ Run the Visual Ralph Loop to autonomously develop and polish a game through iter
 
 ---
 
+## CRITICAL: First-Time Setup
+
+**If this is your first run or browser isn't installed, the VERY FIRST thing that happens must be:**
+
+```
+mcp__playwright__browser_install
+```
+
+This downloads and installs Chromium (~150MB). Without this, the loop WILL hang.
+
+**If a previous run hung**, kill any stuck processes first:
+```bash
+pkill -f chromium
+pkill -f chrome
+```
+
+---
+
 ## Workflow
 
-### Phase 0: Prerequisites Check (MANDATORY)
+### Phase 0: Prerequisites Check (MANDATORY - DO NOT SKIP)
 
-**BEFORE doing anything else, verify the environment is ready.**
+**STOP. Before ANY other action, you MUST complete these steps in order.**
 
-#### Step 1: Install Playwright Browser
+#### Step 1: Install Browser (REQUIRED FIRST ACTION)
 
-```
-Call: mcp__playwright__browser_install
-
-This installs Chromium if not already installed.
-Wait for it to complete before proceeding.
-```
-
-#### Step 2: Test Browser Launch
+**YOUR VERY FIRST ACTION must be calling browser_install. No exceptions.**
 
 ```
-Call: mcp__playwright__browser_navigate
-Parameters: url = "about:blank"
+IMMEDIATELY call: mcp__playwright__browser_install
 
-If this fails: STOP and report the error.
-If this succeeds: Browser is working.
+DO NOT:
+- Print "Launching preview..." before this completes
+- Call browser_navigate before this completes
+- Do anything else before this completes
+
+WAIT for the install to finish. It may take 1-2 minutes.
+If it says "Browser installed" or similar, proceed.
+If it fails, STOP and report the error to the user.
 ```
 
-#### Step 3: Verify Preview Files
+#### Step 2: Verify Preview Files Exist
 
 ```
-Check these files exist:
+Use Glob or Read to verify these files exist:
 - preview/index.html
 - preview/game-renderer.js
 - preview/game.js
 
-If missing: STOP and report which files are missing.
+If ANY are missing: STOP and report to user.
 ```
 
-#### Step 4: Get Absolute Preview Path
+#### Step 3: Test Browser Works
 
 ```
-Use pwd or file system to get the absolute path.
-Store it for later: file:///[absolute-path]/preview/index.html
+ONLY after Step 1 completes successfully:
+
+Call: mcp__playwright__browser_navigate
+Parameters: url = "about:blank"
+
+If this fails: STOP and report error.
+If success: Close browser with mcp__playwright__browser_close
 ```
 
-**Only proceed to Phase 1 after ALL prerequisites pass.**
+#### Step 4: Confirm Ready
+
+```
+Print to user:
+"Prerequisites passed:
+  ✓ Browser installed
+  ✓ Preview files found
+  ✓ Browser test successful
+
+Proceeding to game generation..."
+```
+
+**DO NOT proceed to Phase 1 until all 4 steps complete successfully.**
 
 ---
 
