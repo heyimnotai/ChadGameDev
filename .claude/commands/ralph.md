@@ -133,49 +133,51 @@ Ready for project selection..."
 
 ### Phase 1: Interactive Project Selection
 
-**After prerequisites pass, guide the user through choices using AskUserQuestion.**
+**After prerequisites pass, YOU MUST USE THE AskUserQuestion TOOL to present choices.**
 
-#### Question 1: Project Mode
+**DO NOT just print text and wait. USE THE TOOL.**
 
-**IMMEDIATELY after prerequisites, ask this FIRST:**
+#### Question 1: Project Mode (USE AskUserQuestion TOOL NOW)
 
-```
-AskUserQuestion:
-  Question: "What would you like to do?"
-  Header: "Mode"
-  Options:
-    - Label: "New Game"
-      Description: "Create a new game from scratch"
-    - Label: "Continue Project"
-      Description: "Keep improving an existing game"
-```
+**IMMEDIATELY call the AskUserQuestion tool with these EXACT parameters:**
 
-#### Question 2: Iteration Count
-
-**Ask this SECOND (regardless of mode):**
-
-```
-AskUserQuestion:
-  Question: "How many improvement cycles should Ralph run?"
-  Header: "Cycles"
-  Options:
-    - Label: "5 cycles"
-      Description: "Quick prototype (~10-15 min)"
-    - Label: "10 cycles (Recommended)"
-      Description: "Standard development (~20-30 min)"
-    - Label: "20 cycles"
-      Description: "Deep polish (~45-60 min)"
-    - Label: "Custom"
-      Description: "I'll specify a number"
+```json
+{
+  "questions": [{
+    "question": "What would you like to do?",
+    "header": "Mode",
+    "multiSelect": false,
+    "options": [
+      {"label": "New Game", "description": "Create a new game from scratch"},
+      {"label": "Continue Project", "description": "Keep improving an existing game"}
+    ]
+  }]
+}
 ```
 
-If "Custom" selected, ask:
+**WAIT for user response before continuing.**
+
+#### Question 2: Iteration Count (USE AskUserQuestion TOOL)
+
+**After user selects mode, IMMEDIATELY call AskUserQuestion again:**
+
+```json
+{
+  "questions": [{
+    "question": "How many improvement cycles should Ralph run?",
+    "header": "Cycles",
+    "multiSelect": false,
+    "options": [
+      {"label": "5 cycles", "description": "Quick prototype (~10-15 min)"},
+      {"label": "10 cycles", "description": "Standard - Recommended"},
+      {"label": "20 cycles", "description": "Deep polish (~45-60 min)"},
+      {"label": "Custom", "description": "I'll specify a number"}
+    ]
+  }]
+}
 ```
-AskUserQuestion:
-  Question: "Enter number of cycles (1-50):"
-  Header: "Custom"
-  (User types number)
-```
+
+If "Custom" selected, ask for number via another AskUserQuestion.
 
 ---
 
@@ -183,28 +185,42 @@ AskUserQuestion:
 
 If user selected "New Game":
 
-**Question 3A: Game Idea**
+**Question 3A: Game Idea (USE AskUserQuestion TOOL)**
 
-```
-AskUserQuestion:
-  Question: "Describe your game idea in detail:"
-  Header: "Idea"
-  (User types their game concept - this is free text input via "Other")
+```json
+{
+  "questions": [{
+    "question": "Describe your game idea:",
+    "header": "Idea",
+    "multiSelect": false,
+    "options": [
+      {"label": "Tap collector", "description": "Tap items to collect points"},
+      {"label": "Endless runner", "description": "Avoid obstacles, run forever"},
+      {"label": "Puzzle game", "description": "Match or solve puzzles"},
+      {"label": "Custom idea", "description": "I'll describe my own game"}
+    ]
+  }]
+}
 ```
 
-**Question 4A: Project Name**
+User will select an option or type their own via "Other".
+
+**Question 4A: Project Name (USE AskUserQuestion TOOL)**
 
 After receiving the idea, suggest a name:
 
-```
-AskUserQuestion:
-  Question: "What should we name this project?"
-  Header: "Name"
-  Options:
-    - Label: "[auto-suggested-name]"
-      Description: "Based on your game idea"
-    - Label: "Custom name"
-      Description: "I'll type my own"
+```json
+{
+  "questions": [{
+    "question": "What should we name this project?",
+    "header": "Name",
+    "multiSelect": false,
+    "options": [
+      {"label": "[auto-suggested-name]", "description": "Based on your game idea"},
+      {"label": "Custom name", "description": "I'll type my own"}
+    ]
+  }]
+}
 ```
 
 **Then create project:**
@@ -233,46 +249,50 @@ Create `projects/[project-name]/project.json`:
 
 If user selected "Continue Project":
 
-**Question 3B: Select Project**
+**Question 3B: Select Project (USE AskUserQuestion TOOL)**
 
 First, list existing projects:
 ```bash
 ls -d projects/*/ 2>/dev/null | xargs -I {} basename {}
 ```
 
-Read each `project.json` for status, then:
+Read each `project.json` for status, then call AskUserQuestion:
 
-```
-AskUserQuestion:
-  Question: "Which project do you want to continue?"
-  Header: "Project"
-  Options:
-    - Label: "coin-collector"
-      Description: "15 iterations, last: Jan 5"
-    - Label: "block-blast"
-      Description: "8 iterations, last: Jan 3"
-    [... list all projects ...]
+```json
+{
+  "questions": [{
+    "question": "Which project do you want to continue?",
+    "header": "Project",
+    "multiSelect": false,
+    "options": [
+      {"label": "coin-collector", "description": "15 iterations, last: Jan 5"},
+      {"label": "block-blast", "description": "8 iterations, last: Jan 3"}
+    ]
+  }]
+}
 ```
 
-**Question 4B: What Changes?**
+(Build options dynamically from actual projects found)
 
-```
-AskUserQuestion:
-  Question: "What specific changes or improvements do you want?"
-  Header: "Focus"
-  (User types their specific requests - free text via "Other")
+**Question 4B: What Changes? (USE AskUserQuestion TOOL)**
 
-  Or offer presets:
-  Options:
-    - Label: "Auto-improve"
-      Description: "Let Ralph analyze and decide (Recommended)"
-    - Label: "More juice"
-      Description: "Better animations, particles, effects"
-    - Label: "New mechanics"
-      Description: "Add gameplay features"
-    - Label: "Custom request"
-      Description: "I'll describe what I want"
+```json
+{
+  "questions": [{
+    "question": "What should we focus on this session?",
+    "header": "Focus",
+    "multiSelect": false,
+    "options": [
+      {"label": "Auto-improve", "description": "Let Ralph analyze and decide (Recommended)"},
+      {"label": "More juice", "description": "Better animations, particles, effects"},
+      {"label": "New mechanics", "description": "Add gameplay features"},
+      {"label": "Custom request", "description": "I'll describe what I want"}
+    ]
+  }]
+}
 ```
+
+If "Custom request" selected, user types their specific changes via "Other".
 
 **Then load project:**
 
