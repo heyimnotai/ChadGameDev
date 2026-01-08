@@ -331,21 +331,48 @@ Set up the project, create the game, then run [N] improvement iterations autonom
 ## Phase C: Run Improvement Loop
 For each iteration 1 to [N]:
 
-### Step 1: Capture Screenshot
-node scripts/capture-screenshot.js "file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html" "projects/[project-name]/sessions/[session-id]/screenshots/iteration-X.png" 2000
+### Step 1: Capture Multi-State Screenshots
+Take MULTIPLE screenshots to capture different game states:
 
-### Step 2: Analyze Screenshot
-Read the screenshot and evaluate:
+```bash
+# Initial state (game loaded)
+node scripts/capture-screenshot.js "file:///.../preview/index.html" ".../iteration-X-01-initial.png" 500
+
+# After animations settle
+node scripts/capture-screenshot.js "file:///.../preview/index.html" ".../iteration-X-02-settled.png" 2000
+
+# Gameplay state
+node scripts/capture-screenshot.js "file:///.../preview/index.html" ".../iteration-X-03-gameplay.png" 4000
+```
+
+### Step 2: Analyze All Screenshots
+Read EACH screenshot and evaluate:
 - P0-P2: Errors (crashes, bugs, layout issues)
 - P3-P5: Improvements (polish, mechanics, retention)
+
+Compare screenshots to verify animations and state changes.
 
 ### Step 3: Make Improvements
 Edit preview/game.js to fix errors and add improvements (max 3 changes per iteration)
 
-### Step 4: Log Progress
-Print: "═══ Iteration X/[N] ═══" with summary of changes
+### Step 4: TEST Each Feature Implemented
+**CRITICAL: After making changes, you MUST test them:**
 
-### Step 5: Continue
+Use Playwright to interact with the game:
+1. Navigate to game
+2. Interact to trigger the feature (click, tap, wait)
+3. Take screenshots: before, during animation, after
+4. Verify the feature worked
+
+**If feature DOESN'T work:**
+- Fix it immediately
+- Re-test until it works
+- THEN proceed
+
+### Step 5: Log Progress
+Print: "═══ Iteration X/[N] ═══" with changes and test results
+
+### Step 6: Continue
 Repeat until all [N] iterations complete
 
 ## Quality Standards
@@ -396,23 +423,71 @@ Set up session, load the game, then run [N] improvement iterations autonomously.
 ## Phase B: Run Improvement Loop
 For each iteration 1 to [N]:
 
-### Step 1: Capture Screenshot
-node scripts/capture-screenshot.js "file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html" "projects/[project-name]/sessions/[session-id]/screenshots/iteration-X.png" 2000
+### Step 1: Capture Multi-State Screenshots
+Take MULTIPLE screenshots to capture different game states:
 
-### Step 2: Analyze Screenshot
-Read the screenshot and evaluate:
+```bash
+# Initial state (game loaded)
+node scripts/capture-screenshot.js "file:///.../preview/index.html" ".../iteration-X-01-initial.png" 500
+
+# After a few seconds (animations settled)
+node scripts/capture-screenshot.js "file:///.../preview/index.html" ".../iteration-X-02-settled.png" 2000
+
+# After more time (gameplay state changes)
+node scripts/capture-screenshot.js "file:///.../preview/index.html" ".../iteration-X-03-gameplay.png" 4000
+```
+
+### Step 2: Analyze All Screenshots
+Read EACH screenshot and evaluate:
 - P0-P2: Errors (crashes, bugs, layout issues)
 - P3-P5: Improvements (polish, mechanics, retention)
+
+Compare screenshots to see:
+- Did animations play correctly?
+- Did state transitions happen?
+- Are there visual glitches during motion?
 
 Focus area: [auto / polish / mechanics / retention / user-specified]
 
 ### Step 3: Make Improvements
 Edit preview/game.js to fix errors and add improvements (max 3 changes per iteration)
 
-### Step 4: Log Progress
-Print: "═══ Iteration X/[N] ═══" with summary of changes
+### Step 4: TEST Each Feature Implemented
+**CRITICAL: After making changes, you MUST test them:**
 
-### Step 5: Continue
+Use Playwright to interact with the game and verify:
+```
+For each feature you added/changed:
+1. Navigate to game: mcp__playwright__browser_navigate
+2. Take screenshot of initial state
+3. Interact to trigger the feature:
+   - Click/tap: mcp__playwright__browser_click
+   - Wait for animation: mcp__playwright__browser_wait_for
+4. Take screenshot during animation (quick capture)
+5. Take screenshot after animation completes
+6. Verify the feature worked by analyzing screenshots
+```
+
+**Feature Testing Examples:**
+- Game Over: Play until you lose, screenshot the game over screen
+- Score: Tap to score, verify score label changed
+- Particles: Trigger particle effect, capture during emission
+- Animations: Trigger animation, capture start/middle/end
+- Collisions: Move player into obstacle, verify response
+
+**If feature DOESN'T work:**
+- DO NOT move to next iteration
+- Fix the bug immediately
+- Re-test until it works
+- THEN proceed
+
+### Step 5: Log Progress
+Print: "═══ Iteration X/[N] ═══" with:
+- Changes made
+- Features tested
+- Test results (pass/fail)
+
+### Step 6: Continue
 Repeat until all [N] iterations complete
 
 ## Improvement Priorities
