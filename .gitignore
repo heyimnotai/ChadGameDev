@@ -6,6 +6,17 @@ package-lock.json
 screenshots/
 !screenshots/.gitkeep
 
+# Project screenshots (large, regenerated)
+projects/*/screenshots/
+projects/*/sessions/*/screenshots/
+!projects/*/.gitkeep
+!projects/*/screenshots/.gitkeep
+
+# Keep project metadata but not generated game files
+# (game.js is the output, can be large)
+# Uncomment next line to exclude game files from git:
+# projects/*/game.js
+
 # Session state (regenerated each session)
 ralph/session-state.json
 ralph/current-prompt.md

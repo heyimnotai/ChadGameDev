@@ -1,0 +1,17 @@
+# Projects Directory
+
+Each game project gets its own subfolder here.
+
+## Project Structure
+```
+projects/
+├── coin-collector/
+│   ├── project.json      # Project metadata
+│   ├── game.js           # Game code
+│   ├── screenshots/      # Visual captures
+│   └── sessions/         # Session logs
+├── block-blast/
+│   └── ...
+└── endless-runner/
+    └── ...
+```

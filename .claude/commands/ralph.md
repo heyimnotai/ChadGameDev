@@ -1,17 +1,14 @@
 # Visual Ralph Loop - Autonomous Game Development
 
-Run the Visual Ralph Loop to autonomously develop and polish a game through iterative visual feedback.
+Run the Visual Ralph Loop to autonomously develop and polish games through iterative visual feedback.
 
 ## Usage
 
 ```
-/ralph [iterations] [game description]
+/ralph
 ```
 
-**Examples:**
-- `/ralph 10 hyper-casual coin collector with tap mechanics`
-- `/ralph 5 endless runner with obstacle avoidance`
-- `/ralph` (uses defaults: 10 iterations, continues current session)
+Ralph will prompt you to choose your mode. No arguments needed.
 
 ---
 
@@ -50,13 +47,12 @@ WAIT for this to complete. First-time install takes 1-2 minutes.
 If it shows "Chromium downloaded to..." or "up to date" it worked.
 If it fails, STOP and report the error to the user.
 
-#### Step 2: Verify Preview Files Exist
+#### Step 2: Verify Core Files Exist
 
 ```
 Use Glob or Read to verify these files exist:
 - preview/index.html
 - preview/game-renderer.js
-- preview/game.js
 
 If ANY are missing: STOP and report to user.
 ```
@@ -80,23 +76,167 @@ If success: Close browser with mcp__playwright__browser_close
 Print to user:
 "Prerequisites passed:
   ✓ Browser installed (via bash)
-  ✓ Preview files found
+  ✓ Core files found
   ✓ Browser test successful
 
-Proceeding to game generation..."
+Ready for project selection..."
 ```
 
 **DO NOT proceed to Phase 1 until all 4 steps complete successfully.**
 
 ---
 
-### Phase 1: Initialize Session
+### Phase 1: Project Selection (INTERACTIVE)
 
-1. **Parse Arguments**
-   - Extract max iterations (default: 10)
-   - Extract game description (or use existing)
+**After prerequisites pass, ask the user to choose their mode using AskUserQuestion.**
 
-2. **Load Context**
+#### Step 1: Present Options
+
+Use the AskUserQuestion tool with:
+```
+Question: "What would you like to do?"
+Header: "Mode"
+Options:
+  1. "New Game" - "Create a new game from a prompt idea"
+  2. "Continue Project" - "Continue improving an existing project"
+```
+
+#### Step 2A: NEW GAME Flow
+
+If user selects "New Game":
+
+1. **Ask for game idea**:
+   ```
+   Question: "Describe your game idea"
+   Header: "Idea"
+   (User types their game concept)
+   ```
+
+2. **Ask for project name**:
+   ```
+   Question: "What should we name this project? (lowercase, no spaces)"
+   Header: "Name"
+   Options:
+     - Auto-suggest based on idea (e.g., "coin-collector")
+     - "custom" - "I'll type my own name"
+   ```
+
+3. **Ask for iterations**:
+   ```
+   Question: "How many improvement iterations?"
+   Header: "Iterations"
+   Options:
+     - "10" - "Standard (recommended for new games)"
+     - "20" - "Deep polish (more improvements)"
+     - "5" - "Quick prototype"
+     - "custom" - "I'll specify a number"
+   ```
+
+4. **Create project folder**:
+   ```bash
+   mkdir -p projects/[project-name]/screenshots
+   mkdir -p projects/[project-name]/sessions
+   ```
+
+5. **Create project.json**:
+   ```json
+   {
+     "name": "[project-name]",
+     "description": "[user's game idea]",
+     "created": "[ISO timestamp]",
+     "lastModified": "[ISO timestamp]",
+     "totalIterations": 0,
+     "totalSessions": 0,
+     "status": "in-development",
+     "currentSession": null
+   }
+   ```
+
+6. **Set working project**: `projects/[project-name]/`
+
+#### Step 2B: CONTINUE PROJECT Flow
+
+If user selects "Continue Project":
+
+1. **List existing projects**:
+   ```bash
+   ls projects/
+   ```
+
+   Read each project's `project.json` to show status.
+
+2. **Present project list**:
+   ```
+   Question: "Which project do you want to continue?"
+   Header: "Project"
+   Options: [List of existing projects with their status]
+     - "coin-collector" - "Last modified: Jan 5, 15 iterations completed"
+     - "block-blast" - "Last modified: Jan 3, 8 iterations completed"
+     - etc.
+   ```
+
+3. **Ask what to focus on**:
+   ```
+   Question: "What should we focus on this session?"
+   Header: "Focus"
+   Options:
+     - "Auto" - "Let Ralph decide based on analysis (Recommended)"
+     - "Polish" - "Focus on juice, animations, effects"
+     - "Mechanics" - "Add new gameplay features"
+     - "Retention" - "Optimize for player engagement"
+     - "Bug fixes" - "Fix any issues first"
+   ```
+
+4. **Ask for iterations**:
+   ```
+   Question: "How many improvement iterations this session?"
+   Header: "Iterations"
+   Options:
+     - "10" - "Standard session"
+     - "20" - "Extended session"
+     - "5" - "Quick improvements"
+   ```
+
+5. **Load project**: Read `projects/[project-name]/project.json`
+
+6. **Copy game to preview**:
+   ```bash
+   cp projects/[project-name]/game.js preview/game.js
+   ```
+
+7. **Set working project**: `projects/[project-name]/`
+
+---
+
+### Phase 1.5: Session Setup
+
+After project selection (new or continue):
+
+1. **Generate session ID**: `session-[timestamp]`
+
+2. **Create session folder**:
+   ```bash
+   mkdir -p projects/[project-name]/sessions/[session-id]
+   mkdir -p projects/[project-name]/sessions/[session-id]/screenshots
+   ```
+
+3. **Create session.json**:
+   ```json
+   {
+     "sessionId": "[session-id]",
+     "startedAt": "[ISO timestamp]",
+     "projectName": "[project-name]",
+     "mode": "new|continue",
+     "focus": "[auto|polish|mechanics|retention|bugs]",
+     "maxIterations": [N],
+     "currentIteration": 0,
+     "improvements": [],
+     "errorsFixed": [],
+     "status": "running"
+   }
+   ```
+
+4. **Load context**:
    - Read `patches.md` for known solutions
    - Read `ralph/session-state.json` for any existing session
    - Read `ralph/config.json` for settings
@@ -159,7 +299,7 @@ Use visual-testing skill:
 - Capture initial state (game loaded)
 - Capture gameplay state (after interactions)
 - Capture different game states (menu, playing, game over)
-- Save to screenshots/session-[ID]/iteration-[N]/
+- Save to projects/[project-name]/sessions/[session-id]/screenshots/iteration-[N]/
 ```
 
 #### Step 2: Deep Analysis (Errors AND Improvements)
@@ -300,24 +440,60 @@ Use all the iterations the user gave you to make the game as good as possible.
 
 ### Phase 4: Completion
 
-When loop ends (all gates pass OR max iterations):
+When loop ends (max iterations reached):
 
-1. **Generate Summary**
+1. **Save Game to Project Folder (REQUIRED)**
+
+   ```bash
+   # Copy the final game.js to the project folder
+   cp preview/game.js projects/[project-name]/game.js
+
+   # Copy final screenshot
+   cp [latest-screenshot] projects/[project-name]/screenshots/latest.png
+   ```
+
+2. **Update Project Metadata**
+
+   Update `projects/[project-name]/project.json`:
+   ```json
+   {
+     "lastModified": "[ISO timestamp]",
+     "totalIterations": [previous + this session],
+     "totalSessions": [previous + 1],
+     "status": "in-development"
+   }
+   ```
+
+3. **Finalize Session**
+
+   Update `projects/[project-name]/sessions/[session-id]/session.json`:
+   ```json
+   {
+     "status": "completed",
+     "completedAt": "[ISO timestamp]",
+     "finalIterations": [N],
+     "improvements": [...],
+     "errorsFixed": [...]
+   }
+   ```
+
+4. **Generate Summary**
    - Total iterations used
    - Issues found and fixed
+   - Improvements made by category (P3/P4/P5)
    - Patches created
    - Final quality gate status
 
-2. **Update Patches**
+5. **Update Patches**
    - Add any new problem→solution pairs
    - Update patch statistics
 
-3. **Present Results**
+6. **Present Results**
    - Show final screenshot
-   - List remaining issues (if any)
+   - List improvements made this session
    - Provide next steps
 
-4. **Launch Preview for User Testing (REQUIRED)**
+7. **Launch Preview for User Testing (REQUIRED)**
 
    **After completion, ALWAYS open the game in the user's browser so they can test it.**
 
@@ -332,7 +508,11 @@ When loop ends (all gates pass OR max iterations):
 
    Tell the user:
    ```
-   "Game preview opened in your browser. Test it out!
+   "Game saved to: projects/[project-name]/
+
+   Game preview opened in your browser. Test it out!
+
+   To continue improving this game later, run /ralph and select 'Continue Project'.
 
    If the browser didn't open, manually navigate to:
    \\wsl.localhost\Ubuntu\home\wsley\Coding\GameSkillsFrameWork\preview\index.html"
