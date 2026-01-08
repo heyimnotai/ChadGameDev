@@ -94,6 +94,19 @@ class BlockBlast {
         this.comboLabel = null;
         this.gridGlow = null;
 
+        // Milestone tracking
+        this.milestones = [100, 250, 500, 1000, 2500, 5000, 10000];
+        this.lastMilestoneIndex = -1;
+        this.milestoneLabel = null;
+        this.milestoneGlow = null;
+
+        // Ambient animation timing
+        this.ambientTime = 0;
+
+        // Title shimmer effect
+        this.titleShimmerTime = 0;
+        this.titleGlow = null;
+
         // Create scene
         this.scene = new Scene({ width: this.width, height: this.height });
         this.scene.backgroundColor = new Color(0.08, 0.08, 0.12);
@@ -194,6 +207,34 @@ class BlockBlast {
         this.restartLabel.isHidden = true;
         this.restartLabel.zPosition = 100;
         this.scene.addChild(this.restartLabel);
+
+        // Milestone celebration label (hidden initially)
+        this.milestoneLabel = new LabelNode('');
+        this.milestoneLabel.fontSize = 72;
+        this.milestoneLabel.fontColor = new Color(1, 0.85, 0.2); // Golden
+        this.milestoneLabel.position = new Vector2(this.width / 2, this.height / 2 - 50);
+        this.milestoneLabel.isHidden = true;
+        this.milestoneLabel.zPosition = 95;
+        this.scene.addChild(this.milestoneLabel);
+
+        // Full-screen milestone glow overlay (hidden initially)
+        this.milestoneGlow = new SpriteNode(new Color(1, 0.85, 0.2).withOpacity(0), {
+            width: this.width,
+            height: this.height
+        });
+        this.milestoneGlow.position = new Vector2(this.width / 2, this.height / 2);
+        this.milestoneGlow.zPosition = 90;
+        this.scene.addChild(this.milestoneGlow);
+
+        // Title glow (subtle background glow behind title)
+        this.titleGlow = new SpriteNode(new Color(0.4, 0.6, 1).withOpacity(0), {
+            width: 600,
+            height: 100
+        });
+        this.titleGlow.cornerRadius = 50;
+        this.titleGlow.position = new Vector2(this.width / 2, this.safeTop + 60);
+        this.titleGlow.zPosition = -1;
+        this.scene.addChild(this.titleGlow);
     }
 
     createGrid() {
@@ -256,9 +297,10 @@ class BlockBlast {
         }
         this.blockSlots = [];
 
-        // Spawn 3 new random blocks
+        // Spawn 3 new random blocks with staggered animation
         const slotY = this.gridY + this.gridHeight + 180;
         const slotSpacing = this.width / 4;
+        const startY = this.height + 100; // Start below screen
 
         for (let i = 0; i < 3; i++) {
             const shape = this.shapes[Math.floor(Math.random() * this.shapes.length)];
@@ -266,9 +308,23 @@ class BlockBlast {
             const slotX = slotSpacing * (i + 1);
 
             const block = this.createBlockShape(shape, color, 0.6);
-            block.position = new Vector2(slotX, slotY);
+            // Start below screen
+            block.position = new Vector2(slotX, startY);
+            block.scale = new Vector2(0.3, 0.3);
             block.zPosition = 10;
             this.scene.addChild(block);
+
+            // Animate to final position with stagger
+            const delay = i * 100; // 100ms stagger between blocks
+            setTimeout(() => {
+                // Bounce up animation
+                const moveUp = Action.moveTo(new Vector2(slotX, slotY), 350);
+                moveUp.timingFunction = Action.easeOut;
+                const scaleUp = Action.scaleTo(0.6, 350);
+                scaleUp.timingFunction = Action.easeOut;
+                this.scene.run(block, moveUp);
+                this.scene.run(block, scaleUp);
+            }, delay);
 
             this.blockSlots.push({
                 shape,
@@ -647,16 +703,54 @@ class BlockBlast {
             this.highScoreLabel.text = `BEST: ${this.highScore}`;
         }
 
-        // Show game over UI
-        this.gameOverLabel.isHidden = false;
-        this.restartLabel.isHidden = false;
+        // Explode all placed blocks outward
+        const gridCenterX = this.gridX + this.gridWidth / 2;
+        const gridCenterY = this.gridY + this.gridHeight / 2;
 
-        // Animate
-        this.gameOverLabel.scale = new Vector2(0.5, 0.5);
-        const scaleUp = Action.scaleTo(1, 300);
-        scaleUp.timingFunction = Action.easeOut;
-        this.scene.run(this.gameOverLabel, scaleUp);
+        for (const block of this.placedBlocks) {
+            // Calculate direction from center
+            const dx = block.node.position.x - gridCenterX;
+            const dy = block.node.position.y - gridCenterY;
+            const angle = Math.atan2(dy, dx);
 
+            // Random velocity outward
+            const speed = 300 + Math.random() * 400;
+            const targetX = block.node.position.x + Math.cos(angle) * speed;
+            const targetY = block.node.position.y + Math.sin(angle) * speed;
+
+            // Add some rotation effect
+            const rotation = (Math.random() - 0.5) * 720; // Random rotation
+
+            // Animate explosion
+            const moveOut = Action.moveTo(new Vector2(targetX, targetY), 600);
+            moveOut.timingFunction = Action.easeOut;
+            const fadeOut = Action.fadeOut(600);
+            const scaleDown = Action.scaleTo(0.3, 600);
+
+            this.scene.run(block.node, moveOut);
+            this.scene.run(block.node, fadeOut);
+            this.scene.run(block.node, scaleDown);
+
+            // Burst particles from each block
+            this.particles.position = block.node.position;
+            this.particles.particleColor = this.grid[block.y]?.[block.x] || Color.white;
+            this.particles.burst(3);
+        }
+
+        // Show game over UI with delay for explosion effect
+        setTimeout(() => {
+            this.gameOverLabel.isHidden = false;
+            this.restartLabel.isHidden = false;
+
+            // Animate
+            this.gameOverLabel.scale = new Vector2(0.5, 0.5);
+            const scaleUp = Action.scaleTo(1, 300);
+            scaleUp.timingFunction = Action.easeOut;
+            this.scene.run(this.gameOverLabel, scaleUp);
+        }, 300);
+
+        // Screen shake for impact
+        this.screenShake(12, 400);
         HapticFeedback.notification('error');
     }
 
@@ -670,6 +764,78 @@ class BlockBlast {
             Action.scaleTo(1, 150)
         ]);
         this.scene.run(this.scoreLabel, pop);
+
+        // Check for milestone celebration
+        this.checkMilestone();
+    }
+
+    /**
+     * Check if player reached a score milestone and trigger celebration
+     */
+    checkMilestone() {
+        // Find current milestone index
+        let currentMilestoneIndex = -1;
+        for (let i = 0; i < this.milestones.length; i++) {
+            if (this.score >= this.milestones[i]) {
+                currentMilestoneIndex = i;
+            }
+        }
+
+        // If we've reached a new milestone
+        if (currentMilestoneIndex > this.lastMilestoneIndex) {
+            this.lastMilestoneIndex = currentMilestoneIndex;
+            this.triggerMilestoneCelebration(currentMilestoneIndex);
+        }
+    }
+
+    /**
+     * Trigger milestone celebration with golden glow, text, and particles
+     */
+    triggerMilestoneCelebration(milestoneIndex) {
+        // Milestone celebration texts
+        const celebrationTexts = ['NICE!', 'GREAT!', 'AMAZING!', 'INCREDIBLE!', 'LEGENDARY!', 'GODLIKE!', 'UNSTOPPABLE!'];
+        const text = celebrationTexts[Math.min(milestoneIndex, celebrationTexts.length - 1)];
+
+        // Show and animate milestone label
+        this.milestoneLabel.text = text;
+        this.milestoneLabel.isHidden = false;
+        this.milestoneLabel.scale = new Vector2(0.3, 0.3);
+        this.milestoneLabel.alpha = 1;
+
+        // Pop in, hold, then fade out
+        const popIn = Action.scaleTo(1.2, 150);
+        popIn.timingFunction = Action.easeOut;
+        const settle = Action.scaleTo(1, 100);
+        const hold = Action.wait(600);
+        const fadeOut = Action.fadeOut(300);
+        const labelAnim = Action.sequence([popIn, settle, hold, fadeOut]);
+        this.scene.run(this.milestoneLabel, labelAnim);
+
+        // Hide after animation
+        setTimeout(() => {
+            this.milestoneLabel.isHidden = true;
+            this.milestoneLabel.alpha = 1;
+        }, 1200);
+
+        // Golden screen flash
+        this.milestoneGlow.color = new Color(1, 0.85, 0.2).withOpacity(0.25);
+        const flashIn = Action.fadeIn(100);
+        const flashOut = Action.fadeOut(400);
+        const flashAnim = Action.sequence([flashIn, flashOut]);
+        this.scene.run(this.milestoneGlow, flashAnim);
+
+        // Big particle burst from score label position
+        this.particles.position = this.scoreLabel.position;
+        this.particles.particleColor = new Color(1, 0.85, 0.2); // Golden
+        this.particles.particleSize = 24;
+        this.particles.particleSpeed = 500;
+        this.particles.burst(25);
+        // Reset particle settings
+        this.particles.particleSize = 18;
+        this.particles.particleSpeed = 400;
+
+        // Haptic feedback
+        HapticFeedback.notification('success');
     }
 
     /**
@@ -916,6 +1082,47 @@ class BlockBlast {
         this.particles.update(deltaTime);
         this.updateScreenShake(deltaTime);
         this.updateFloatingLabels(deltaTime);
+        this.updateAmbientGridAnimation(deltaTime);
+        this.updateTitleShimmer(deltaTime);
+    }
+
+    /**
+     * Subtle ambient pulse animation across grid cells
+     * Creates a gentle wave effect with staggered timing
+     */
+    updateAmbientGridAnimation(deltaTime) {
+        this.ambientTime += deltaTime;
+        const cycleTime = 2500; // 2.5 second full cycle
+        const waveSpeed = 0.003; // Wave propagation speed
+
+        for (let y = 0; y < this.gridSize; y++) {
+            for (let x = 0; x < this.gridSize; x++) {
+                const cell = this.gridCells[y][x];
+                // Only animate empty cells (not occupied)
+                if (this.grid[y][x] === null) {
+                    // Stagger phase based on position (diagonal wave)
+                    const phase = (x + y) * waveSpeed * 1000;
+                    // Sine wave oscillating between 0.85 and 1.0 opacity
+                    const pulse = 0.925 + 0.075 * Math.sin((this.ambientTime + phase) * (2 * Math.PI / cycleTime));
+                    cell.alpha = pulse;
+                } else {
+                    cell.alpha = 1; // Full opacity for occupied cells
+                }
+            }
+        }
+    }
+
+    /**
+     * Subtle glow pulse behind the title
+     * Very gentle ~3.5 second cycle
+     */
+    updateTitleShimmer(deltaTime) {
+        this.titleShimmerTime += deltaTime;
+        const cycleTime = 3500; // 3.5 second cycle
+
+        // Gentle pulse between 0 and 0.15 opacity
+        const pulse = 0.075 + 0.075 * Math.sin(this.titleShimmerTime * (2 * Math.PI / cycleTime));
+        this.titleGlow.color = new Color(0.4, 0.6, 1).withOpacity(pulse);
     }
 
     render(ctx, width, height) {
@@ -941,6 +1148,7 @@ class BlockBlast {
         this.gameOver = false;
         this.grid = this.createEmptyGrid();
         this.comboCount = 0;
+        this.lastMilestoneIndex = -1; // Reset milestone tracking
 
         // Hide game over UI
         this.gameOverLabel.isHidden = true;
@@ -949,6 +1157,9 @@ class BlockBlast {
         // Hide combo UI
         this.comboLabel.isHidden = true;
         this.hideGridGlow();
+
+        // Hide milestone UI
+        this.milestoneLabel.isHidden = true;
 
         // Clear placed blocks
         for (const block of this.placedBlocks) {

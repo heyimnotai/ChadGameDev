@@ -32,9 +32,9 @@ Step 2: Iteration Count
 ┌─────────────────────────────────────────┐
 │  How many improvement cycles?           │
 │                                         │
-│  ○ 5  (Quick prototype)                 │
-│  ○ 10 (Standard - Recommended)          │
-│  ○ 20 (Deep polish)                     │
+│  ○ 5  (~30 min)                         │
+│  ○ 10 (~1 hour) - Recommended           │
+│  ○ 20 (~2 hours)                        │
 │  ○ Custom                               │
 └─────────────────────────────────────────┘
 
@@ -113,9 +113,9 @@ If something fails later, diagnose then.
     "header": "Cycles",
     "multiSelect": false,
     "options": [
-      {"label": "5 cycles", "description": "Quick prototype (~10-15 min)"},
-      {"label": "10 cycles", "description": "Standard - Recommended"},
-      {"label": "20 cycles", "description": "Deep polish (~45-60 min)"},
+      {"label": "5 cycles", "description": "Quick prototype (~30 min)"},
+      {"label": "10 cycles", "description": "Standard (~1 hour) - Recommended"},
+      {"label": "20 cycles", "description": "Deep polish (~2 hours)"},
       {"label": "Custom", "description": "I'll specify a number"}
     ]
   }]
