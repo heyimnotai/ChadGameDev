@@ -14,17 +14,23 @@ Run this command before using Ralph to ensure all dependencies are installed.
 
 Before doing anything, verify the following are working:
 
-### 1. Playwright Browser
+### 1. Install Playwright Browser via Bash
 
-**Check**: Try to use Playwright MCP tools.
+**IMPORTANT: Do NOT use mcp__playwright__browser_install - it hangs.**
 
-**If browser not installed**: Use the `mcp__playwright__browser_install` tool to install it.
-
+Use the Bash tool to run:
+```bash
+npx playwright install chromium
 ```
-Call: mcp__playwright__browser_install
+
+Set timeout to 300000 (5 minutes) as first-time install downloads ~165MB.
+
+**Expected output:**
+```
+Chromium 143.x.x downloaded to /home/user/.cache/ms-playwright/chromium-xxxx
 ```
 
-This installs the default browser (Chromium) for Playwright.
+If it says "already installed" or shows the download progress, it's working.
 
 ### 2. Test Browser Launch
 

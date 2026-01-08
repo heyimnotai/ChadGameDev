@@ -17,14 +17,6 @@ Run the Visual Ralph Loop to autonomously develop and polish a game through iter
 
 ## CRITICAL: First-Time Setup
 
-**If this is your first run or browser isn't installed, the VERY FIRST thing that happens must be:**
-
-```
-mcp__playwright__browser_install
-```
-
-This downloads and installs Chromium (~150MB). Without this, the loop WILL hang.
-
 **If a previous run hung**, kill any stuck processes first:
 ```bash
 pkill -f chromium
@@ -39,22 +31,25 @@ pkill -f chrome
 
 **STOP. Before ANY other action, you MUST complete these steps in order.**
 
-#### Step 1: Install Browser (REQUIRED FIRST ACTION)
+#### Step 1: Install Browser via Bash (REQUIRED FIRST ACTION)
 
-**YOUR VERY FIRST ACTION must be calling browser_install. No exceptions.**
+**YOUR VERY FIRST ACTION must be running this bash command. No exceptions.**
 
+```bash
+# Run this FIRST - installs Chromium if not present
+npx playwright install chromium
 ```
-IMMEDIATELY call: mcp__playwright__browser_install
 
-DO NOT:
-- Print "Launching preview..." before this completes
-- Call browser_navigate before this completes
-- Do anything else before this completes
+Use the Bash tool with timeout of 300000 (5 minutes) to run:
+```
+npx playwright install chromium
+```
 
-WAIT for the install to finish. It may take 1-2 minutes.
-If it says "Browser installed" or similar, proceed.
+**DO NOT use mcp__playwright__browser_install** - it hangs. Use Bash instead.
+
+WAIT for this to complete. First-time install downloads ~165MB and takes 1-2 minutes.
+If it shows "Chromium downloaded to..." it worked.
 If it fails, STOP and report the error to the user.
-```
 
 #### Step 2: Verify Preview Files Exist
 
@@ -75,7 +70,8 @@ ONLY after Step 1 completes successfully:
 Call: mcp__playwright__browser_navigate
 Parameters: url = "about:blank"
 
-If this fails: STOP and report error.
+If this fails with "browser not found": Run Step 1 again.
+If this fails for other reasons: STOP and report error.
 If success: Close browser with mcp__playwright__browser_close
 ```
 
@@ -84,7 +80,7 @@ If success: Close browser with mcp__playwright__browser_close
 ```
 Print to user:
 "Prerequisites passed:
-  ✓ Browser installed
+  ✓ Browser installed (via bash)
   ✓ Preview files found
   ✓ Browser test successful
 
