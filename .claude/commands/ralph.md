@@ -246,27 +246,138 @@ After project selection (new or continue):
    - Create `screenshots/session-[ID]/` directory
    - Update `ralph/session-state.json`
 
-### Phase 2: Game Generation
+### Phase 2: Sub-Agent Architecture
 
-1. **Invoke Skills**
-   - Use `game-architect` for overall structure
-   - Use domain-specific skills based on game type
-   - Generate `preview/game.js` code
+**Ralph uses sub-agents for hands-off development.** The main orchestrator manages the loop while sub-agents do the actual coding work with full permissions.
 
-2. **Launch Preview**
-   - Use Playwright to navigate to preview
-   - Wait for initial render
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  RALPH ORCHESTRATOR (Main Claude)                                           │
+│  - Manages project selection                                                │
+│  - Analyzes screenshots                                                     │
+│  - Decides what to improve                                                  │
+│  - Spawns sub-agents for each iteration                                     │
+│  - Tracks progress and patches                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  SUB-AGENT (Iteration Worker)                                               │
+│  - Runs with: claude --dangerously-skip-permissions                         │
+│  - Receives specific task prompt                                            │
+│  - Writes/modifies game code                                                │
+│  - No permission prompts = faster iteration                                 │
+│  - Returns when task complete                                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### How to Spawn Sub-Agents
+
+For each iteration, use the **Bash tool** to spawn a sub-agent:
+
+```bash
+echo "[ITERATION PROMPT]" | claude --dangerously-skip-permissions -p
+```
+
+Or use the **Task tool** with `subagent_type: "Bash"` to run:
+```bash
+cd /home/wsley/Coding/GameSkillsFrameWork && claude --dangerously-skip-permissions -p "[PROMPT]"
+```
+
+#### Sub-Agent Prompt Template
+
+Each sub-agent receives a focused prompt:
+
+```markdown
+# Ralph Iteration [N] - [Project Name]
+
+## Your Task
+You are a sub-agent in the Ralph Loop. Complete this iteration's improvements.
+
+## Project Location
+- Game file: preview/game.js
+- Project folder: projects/[project-name]/
+
+## This Iteration's Focus
+[From orchestrator's analysis]
+
+### Errors to Fix (P0-P2)
+[List of specific errors with file locations]
+
+### Improvements to Make (P3-P5)
+[List of specific improvements with implementation details]
+
+## Instructions
+1. Read the current game.js
+2. Make the specified changes
+3. Save the file
+4. Exit when done
+
+## Quality Standards
+- Maintain 60 FPS
+- Respect safe areas (top: 162px, bottom: 102px at 3x)
+- Use game-renderer.js abstractions
+- Add juice and polish to every interaction
+
+## When Done
+Simply exit. The orchestrator will capture screenshots and analyze results.
+```
+
+---
+
+### Phase 2.5: Initial Game Generation
+
+For NEW games, spawn a sub-agent to create the initial game:
+
+```bash
+cd /home/wsley/Coding/GameSkillsFrameWork && claude --dangerously-skip-permissions -p "
+# Create New Game: [Project Name]
+
+## Game Concept
+[User's game description]
+
+## Your Task
+Create preview/game.js implementing this game concept.
+
+## Technical Requirements
+- Use game-renderer.js abstractions (SpriteNode, ShapeNode, LabelNode, Action, Scene, ParticleEmitter)
+- Canvas: 1179x2556 at 3x scale (393x852 logical)
+- Safe area top: 162px, bottom: 102px
+- Target 60 FPS
+- Implement touch handling
+
+## Game Structure
+1. Game state machine (menu, playing, gameOver)
+2. Core gameplay loop
+3. Score tracking
+4. Visual feedback on actions
+5. Game over condition
+
+## Invoke Skills
+Use these skills from ios-game-skills/:
+- core-loop-architect
+- juice-orchestrator
+- particle-effects
+- dopamine-optimizer
+
+Create a complete, playable game. Exit when done.
+"
+```
+
+---
 
 ### Phase 3: Continuous Improvement Loop
 
 **IMPORTANT: Ralph does NOT stop when errors are fixed. Ralph continuously improves the game for ALL iterations.**
 
-The loop runs for ALL iterations (1 to maxIterations). Each iteration either:
-1. Fixes errors (if any exist), OR
-2. Improves the game (if no errors)
+The loop runs for ALL iterations (1 to maxIterations). Each iteration:
+1. **Orchestrator** captures screenshots and analyzes
+2. **Orchestrator** decides what to improve
+3. **Sub-agent** implements the improvements (with --dangerously-skip-permissions)
+4. **Orchestrator** verifies and continues
 
 **Philosophy: "Is there anything that could be better about this game?"**
-- If YES → Make improvements
+- If YES → Spawn sub-agent to make improvements
 - If NO → Only then consider stopping early (rare)
 
 ---
@@ -382,14 +493,51 @@ Create a prioritized list:
 - [ ] Is difficulty ramping appropriately?
 ```
 
-#### Step 6: Apply Changes
+#### Step 6: Spawn Sub-Agent to Apply Changes
+
+**DO NOT make changes directly. Spawn a sub-agent with full permissions.**
+
+Use Bash tool to spawn the iteration worker:
+
+```bash
+cd /home/wsley/Coding/GameSkillsFrameWork && claude --dangerously-skip-permissions -p "
+# Ralph Iteration [N] - [Project Name]
+
+## Your Task
+You are a sub-agent in the Ralph Loop. Implement these improvements.
+
+## Files
+- Game: preview/game.js
+- Renderer: preview/game-renderer.js (read-only reference)
+
+## Errors to Fix
+[List from Step 5, or 'None' if no errors]
+
+## Improvements to Make
+[List from Step 5 - max 3 items]
+
+## Implementation Notes
+[Specific code guidance from patches.md or skills]
+
+## Quality Standards
+- Maintain 60 FPS
+- Safe areas: top 162px, bottom 102px (at 3x scale)
+- Use existing game-renderer.js classes
+- Every interaction should feel satisfying
+
+Exit when changes are complete.
+"
 ```
-Make code changes:
-- Fix errors first (P0-P2)
-- Then add improvements (P3-P5)
-- Max 3 changes per iteration to keep progress trackable
-- Test each change visually
-```
+
+**Wait for sub-agent to complete before continuing.**
+
+The sub-agent will:
+- Read the current game.js
+- Make the specified changes
+- Save the file
+- Exit automatically
+
+Sub-agent runs with `--dangerously-skip-permissions` so there are no interruptions.
 
 #### Step 7: Verify Quality Gates
 ```
