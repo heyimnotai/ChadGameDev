@@ -183,28 +183,10 @@ After receiving the idea, suggest a name:
 }
 ```
 
-**Then create project:**
+**After name selected, IMMEDIATELY proceed to Phase 2 (spawn sub-agent).**
+DO NOT run any bash commands. The sub-agent will create the project folder and files.
 
-```bash
-mkdir -p projects/[project-name]/screenshots
-mkdir -p projects/[project-name]/sessions
-```
-
-Create `projects/[project-name]/project.json`:
-```json
-{
-  "name": "[project-name]",
-  "description": "[user's game idea]",
-  "created": "[ISO timestamp]",
-  "lastModified": "[ISO timestamp]",
-  "totalIterations": 0,
-  "totalSessions": 0,
-  "totalTokens": 0,
-  "status": "in-development"
-}
-```
-
-`totalTokens` is cumulative across all sessions - updated by loop runner on completion.
+(The sub-agent will create project.json with: name, description, created, totalIterations, totalSessions, totalTokens)
 
 ---
 
@@ -258,67 +240,30 @@ Call AskUserQuestion with the projects you found:
 
 If "Custom request" selected, user types their specific changes via "Other".
 
-**Then load project:**
-
-```bash
-cp projects/[project-name]/game.js preview/game.js
-```
-
-Read `projects/[project-name]/project.json` for context.
+**After all questions answered, IMMEDIATELY proceed to Phase 2 (spawn sub-agent).**
+DO NOT run any bash commands. The sub-agent will handle file setup.
 
 ---
 
-### Phase 2: Session Setup
+### Phase 2: Launch Autonomous Loop Runner (IMMEDIATELY AFTER QUESTIONS)
 
-After project selection (new or continue):
+**After user answers all questions, IMMEDIATELY spawn ONE sub-agent.**
 
-1. **Generate session ID**: `session-[timestamp]`
+**CRITICAL: The orchestrator runs NO bash commands. Only:**
+- Glob/Read (to gather project info) - no permission needed
+- AskUserQuestion (to get user choices) - no permission needed
+- ONE Bash call to spawn the sub-agent - ONE permission prompt
 
-2. **Create session folder**:
-   ```bash
-   mkdir -p projects/[project-name]/sessions/[session-id]
-   mkdir -p projects/[project-name]/sessions/[session-id]/screenshots
-   ```
-
-3. **Create session.json**:
-   ```json
-   {
-     "sessionId": "[session-id]",
-     "startedAt": "[ISO timestamp]",
-     "projectName": "[project-name]",
-     "mode": "new|continue",
-     "focus": "[auto|polish|mechanics|retention|bugs]",
-     "maxIterations": [N],
-     "currentIteration": 0,
-     "improvements": [],
-     "errorsFixed": [],
-     "status": "running"
-   }
-   ```
-
-4. **Load context**:
-   - Read `patches.md` for known solutions
-   - Read `ralph/session-state.json` for any existing session
-   - Read `ralph/config.json` for settings
-
-3. **Setup Session**
-   - Generate unique session ID
-   - Create `screenshots/session-[ID]/` directory
-   - Update `ralph/session-state.json`
-
-### Phase 3: Launch Autonomous Loop Runner
-
-**After user selections, spawn ONE sub-agent that handles the ENTIRE loop.**
-
-This is the key to hands-off operation: ONE permission prompt, then full automation.
+Everything else (session setup, file copying, game code, screenshots) is done BY THE SUB-AGENT.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │  ORCHESTRATOR (Main Claude - YOU)                                           │
-│  - Handles user interaction (Phase 1-2)                                     │
-│  - Spawns ONE loop runner sub-agent                                         │
-│  - Waits for completion                                                     │
-│  - Shows results to user                                                    │
+│  - Phase 0: Glob/Read to gather project info (silent, no prompts)           │
+│  - Phase 1: AskUserQuestion for all choices (no prompts)                    │
+│  - Phase 2: ONE bash call to spawn sub-agent (ONE prompt)                   │
+│  - Phase 3: Wait and show results (no prompts)                              │
+│  NO OTHER BASH COMMANDS. NO FILE WRITES. NO MKDIR.                          │
 └─────────────────────────────────────────────────────────────────────────────┘
                                     │
                           (ONE spawn, ONE permission)
@@ -361,28 +306,31 @@ The prompt must include ALL context needed to run autonomously:
 ```markdown
 # Ralph Loop Runner - New Game
 
-## Project Setup
+## Project Info
 - Project: [project-name]
 - Location: /home/wsley/Coding/GameSkillsFrameWork
-- Game file: preview/game.js
-- Project folder: projects/[project-name]/
-- Session: [session-id]
 - Iterations: [N]
 
 ## Game Concept
 [User's game description]
 
 ## Your Mission
-Run [N] iterations of the Ralph Loop autonomously. Create the game, then continuously improve it.
+Set up the project, create the game, then run [N] improvement iterations autonomously.
 
-## Phase A: Create Initial Game
+## Phase A: Setup (FIRST)
+1. Create project folder and session:
+   mkdir -p projects/[project-name]/sessions/session-$(date +%Y%m%d-%H%M%S)/screenshots
+2. Create project.json if it doesn't exist
+3. Create session.json with session details
+
+## Phase B: Create Initial Game
 1. Create preview/game.js implementing the game concept
 2. Use game-renderer.js abstractions (SpriteNode, ShapeNode, LabelNode, Action, Scene, ParticleEmitter)
 3. Canvas: 1179x2556 at 3x scale (393x852 logical)
 4. Safe areas: top 162px, bottom 102px
 5. Implement: state machine, core loop, scoring, visual feedback, game over
 
-## Phase B: Run Improvement Loop
+## Phase C: Run Improvement Loop
 For each iteration 1 to [N]:
 
 ### Step 1: Capture Screenshot
@@ -431,19 +379,23 @@ Game saved to: projects/[project-name]/game.js
 ```markdown
 # Ralph Loop Runner - Continue Project
 
-## Project Setup
+## Project Info
 - Project: [project-name]
 - Location: /home/wsley/Coding/GameSkillsFrameWork
-- Game file: preview/game.js (already loaded from project)
-- Project folder: projects/[project-name]/
-- Session: [session-id]
 - Iterations: [N]
 - Focus: [auto-improve / user-specified-focus]
 
 ## Your Mission
-Run [N] iterations of the Ralph Loop autonomously on the existing game.
+Set up session, load the game, then run [N] improvement iterations autonomously.
 
-## Run Improvement Loop
+## Phase A: Setup (FIRST)
+1. Create session folder:
+   mkdir -p projects/[project-name]/sessions/session-$(date +%Y%m%d-%H%M%S)/screenshots
+2. Copy existing game to preview:
+   cp projects/[project-name]/game.js preview/game.js
+3. Create session.json with session details
+
+## Phase B: Run Improvement Loop
 For each iteration 1 to [N]:
 
 ### Step 1: Capture Screenshot
@@ -498,7 +450,7 @@ Game saved to: projects/[project-name]/game.js
 
 ---
 
-### Phase 4: Wait for Completion
+### Phase 3: Wait for Completion
 
 After spawning the loop runner, the orchestrator waits.
 
@@ -511,7 +463,7 @@ The sub-agent will:
 
 When it returns, proceed to Phase 5.
 
-### Phase 5: Completion & Token Tally
+### Phase 4: Completion & Token Tally
 
 **When the bash command returns, the orchestrator MUST:**
 
