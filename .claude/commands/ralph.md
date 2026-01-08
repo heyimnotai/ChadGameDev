@@ -156,14 +156,13 @@ If user selected "New Game":
     "options": [
       {"label": "Tap collector", "description": "Tap items to collect points"},
       {"label": "Endless runner", "description": "Avoid obstacles, run forever"},
-      {"label": "Puzzle game", "description": "Match or solve puzzles"},
-      {"label": "Custom idea", "description": "I'll describe my own game"}
+      {"label": "Puzzle game", "description": "Match or solve puzzles"}
     ]
   }]
 }
 ```
 
-User will select an option or type their own via "Other".
+User can select a template OR select "Other" (automatically provided) to describe their own game.
 
 **Question 4A: Project Name (USE AskUserQuestion TOOL)**
 
@@ -231,14 +230,13 @@ Call AskUserQuestion with the projects you found:
     "options": [
       {"label": "Auto-improve", "description": "Let Ralph analyze and decide (Recommended)"},
       {"label": "More juice", "description": "Better animations, particles, effects"},
-      {"label": "New mechanics", "description": "Add gameplay features"},
-      {"label": "Custom request", "description": "I'll describe what I want"}
+      {"label": "New mechanics", "description": "Add gameplay features"}
     ]
   }]
 }
 ```
 
-If "Custom request" selected, user types their specific changes via "Other".
+User can select "Other" (automatically provided) to type a custom focus.
 
 **After all questions answered, IMMEDIATELY proceed to Phase 2 (spawn sub-agent).**
 DO NOT run any bash commands. The sub-agent will handle file setup.
