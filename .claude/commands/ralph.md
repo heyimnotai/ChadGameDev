@@ -8,7 +8,52 @@ Run the Visual Ralph Loop to autonomously develop and polish games through itera
 /ralph
 ```
 
-Ralph will prompt you to choose your mode. No arguments needed.
+Ralph will guide you through interactive choices. No arguments needed.
+
+---
+
+## Interactive Flow
+
+When you run `/ralph`, you'll be guided through these steps:
+
+```
+Step 1: Project Mode
+┌─────────────────────────────────────────┐
+│  What would you like to do?             │
+│                                         │
+│  ○ New Game                             │
+│  ○ Continue Project                     │
+└─────────────────────────────────────────┘
+
+Step 2: Iteration Count
+┌─────────────────────────────────────────┐
+│  How many improvement cycles?           │
+│                                         │
+│  ○ 5  (Quick prototype)                 │
+│  ○ 10 (Standard - Recommended)          │
+│  ○ 20 (Deep polish)                     │
+│  ○ Custom                               │
+└─────────────────────────────────────────┘
+
+Step 3a (New Game): Game Idea
+┌─────────────────────────────────────────┐
+│  Describe your game idea:               │
+│                                         │
+│  > [User types game concept]            │
+└─────────────────────────────────────────┘
+
+Step 3b (Continue): Select Project & Focus
+┌─────────────────────────────────────────┐
+│  Select project:                        │
+│  ○ coin-collector (15 iterations)       │
+│  ○ block-blast (8 iterations)           │
+└─────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│  What changes do you want?              │
+│                                         │
+│  > [User types specific improvements]   │
+└─────────────────────────────────────────┘
+```
 
 ---
 
@@ -86,125 +131,156 @@ Ready for project selection..."
 
 ---
 
-### Phase 1: Project Selection (INTERACTIVE)
+### Phase 1: Interactive Project Selection
 
-**After prerequisites pass, ask the user to choose their mode using AskUserQuestion.**
+**After prerequisites pass, guide the user through choices using AskUserQuestion.**
 
-#### Step 1: Present Options
+#### Question 1: Project Mode
 
-Use the AskUserQuestion tool with:
+**IMMEDIATELY after prerequisites, ask this FIRST:**
+
 ```
-Question: "What would you like to do?"
-Header: "Mode"
-Options:
-  1. "New Game" - "Create a new game from a prompt idea"
-  2. "Continue Project" - "Continue improving an existing project"
+AskUserQuestion:
+  Question: "What would you like to do?"
+  Header: "Mode"
+  Options:
+    - Label: "New Game"
+      Description: "Create a new game from scratch"
+    - Label: "Continue Project"
+      Description: "Keep improving an existing game"
 ```
 
-#### Step 2A: NEW GAME Flow
+#### Question 2: Iteration Count
 
-If user selects "New Game":
+**Ask this SECOND (regardless of mode):**
 
-1. **Ask for game idea**:
-   ```
-   Question: "Describe your game idea"
-   Header: "Idea"
-   (User types their game concept)
-   ```
+```
+AskUserQuestion:
+  Question: "How many improvement cycles should Ralph run?"
+  Header: "Cycles"
+  Options:
+    - Label: "5 cycles"
+      Description: "Quick prototype (~10-15 min)"
+    - Label: "10 cycles (Recommended)"
+      Description: "Standard development (~20-30 min)"
+    - Label: "20 cycles"
+      Description: "Deep polish (~45-60 min)"
+    - Label: "Custom"
+      Description: "I'll specify a number"
+```
 
-2. **Ask for project name**:
-   ```
-   Question: "What should we name this project? (lowercase, no spaces)"
-   Header: "Name"
-   Options:
-     - Auto-suggest based on idea (e.g., "coin-collector")
-     - "custom" - "I'll type my own name"
-   ```
+If "Custom" selected, ask:
+```
+AskUserQuestion:
+  Question: "Enter number of cycles (1-50):"
+  Header: "Custom"
+  (User types number)
+```
 
-3. **Ask for iterations**:
-   ```
-   Question: "How many improvement iterations?"
-   Header: "Iterations"
-   Options:
-     - "10" - "Standard (recommended for new games)"
-     - "20" - "Deep polish (more improvements)"
-     - "5" - "Quick prototype"
-     - "custom" - "I'll specify a number"
-   ```
+---
 
-4. **Create project folder**:
-   ```bash
-   mkdir -p projects/[project-name]/screenshots
-   mkdir -p projects/[project-name]/sessions
-   ```
+#### Path A: NEW GAME Flow
 
-5. **Create project.json**:
-   ```json
-   {
-     "name": "[project-name]",
-     "description": "[user's game idea]",
-     "created": "[ISO timestamp]",
-     "lastModified": "[ISO timestamp]",
-     "totalIterations": 0,
-     "totalSessions": 0,
-     "status": "in-development",
-     "currentSession": null
-   }
-   ```
+If user selected "New Game":
 
-6. **Set working project**: `projects/[project-name]/`
+**Question 3A: Game Idea**
 
-#### Step 2B: CONTINUE PROJECT Flow
+```
+AskUserQuestion:
+  Question: "Describe your game idea in detail:"
+  Header: "Idea"
+  (User types their game concept - this is free text input via "Other")
+```
 
-If user selects "Continue Project":
+**Question 4A: Project Name**
 
-1. **List existing projects**:
-   ```bash
-   ls projects/
-   ```
+After receiving the idea, suggest a name:
 
-   Read each project's `project.json` to show status.
+```
+AskUserQuestion:
+  Question: "What should we name this project?"
+  Header: "Name"
+  Options:
+    - Label: "[auto-suggested-name]"
+      Description: "Based on your game idea"
+    - Label: "Custom name"
+      Description: "I'll type my own"
+```
 
-2. **Present project list**:
-   ```
-   Question: "Which project do you want to continue?"
-   Header: "Project"
-   Options: [List of existing projects with their status]
-     - "coin-collector" - "Last modified: Jan 5, 15 iterations completed"
-     - "block-blast" - "Last modified: Jan 3, 8 iterations completed"
-     - etc.
-   ```
+**Then create project:**
 
-3. **Ask what to focus on**:
-   ```
-   Question: "What should we focus on this session?"
-   Header: "Focus"
-   Options:
-     - "Auto" - "Let Ralph decide based on analysis (Recommended)"
-     - "Polish" - "Focus on juice, animations, effects"
-     - "Mechanics" - "Add new gameplay features"
-     - "Retention" - "Optimize for player engagement"
-     - "Bug fixes" - "Fix any issues first"
-   ```
+```bash
+mkdir -p projects/[project-name]/screenshots
+mkdir -p projects/[project-name]/sessions
+```
 
-4. **Ask for iterations**:
-   ```
-   Question: "How many improvement iterations this session?"
-   Header: "Iterations"
-   Options:
-     - "10" - "Standard session"
-     - "20" - "Extended session"
-     - "5" - "Quick improvements"
-   ```
+Create `projects/[project-name]/project.json`:
+```json
+{
+  "name": "[project-name]",
+  "description": "[user's game idea]",
+  "created": "[ISO timestamp]",
+  "lastModified": "[ISO timestamp]",
+  "totalIterations": 0,
+  "totalSessions": 0,
+  "status": "in-development"
+}
+```
 
-5. **Load project**: Read `projects/[project-name]/project.json`
+---
 
-6. **Copy game to preview**:
-   ```bash
-   cp projects/[project-name]/game.js preview/game.js
-   ```
+#### Path B: CONTINUE PROJECT Flow
 
-7. **Set working project**: `projects/[project-name]/`
+If user selected "Continue Project":
+
+**Question 3B: Select Project**
+
+First, list existing projects:
+```bash
+ls -d projects/*/ 2>/dev/null | xargs -I {} basename {}
+```
+
+Read each `project.json` for status, then:
+
+```
+AskUserQuestion:
+  Question: "Which project do you want to continue?"
+  Header: "Project"
+  Options:
+    - Label: "coin-collector"
+      Description: "15 iterations, last: Jan 5"
+    - Label: "block-blast"
+      Description: "8 iterations, last: Jan 3"
+    [... list all projects ...]
+```
+
+**Question 4B: What Changes?**
+
+```
+AskUserQuestion:
+  Question: "What specific changes or improvements do you want?"
+  Header: "Focus"
+  (User types their specific requests - free text via "Other")
+
+  Or offer presets:
+  Options:
+    - Label: "Auto-improve"
+      Description: "Let Ralph analyze and decide (Recommended)"
+    - Label: "More juice"
+      Description: "Better animations, particles, effects"
+    - Label: "New mechanics"
+      Description: "Add gameplay features"
+    - Label: "Custom request"
+      Description: "I'll describe what I want"
+```
+
+**Then load project:**
+
+```bash
+cp projects/[project-name]/game.js preview/game.js
+```
+
+Read `projects/[project-name]/project.json` for context.
 
 ---
 
