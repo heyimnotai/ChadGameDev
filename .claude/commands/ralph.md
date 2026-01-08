@@ -206,6 +206,27 @@ When loop ends (all gates pass OR max iterations):
    - List remaining issues (if any)
    - Provide next steps
 
+4. **Launch Preview for User Testing (REQUIRED)**
+
+   **After completion, ALWAYS open the game in the user's browser so they can test it.**
+
+   Use Bash to run:
+   ```bash
+   explorer.exe "$(wslpath -w /home/wsley/Coding/GameSkillsFrameWork/preview/index.html)"
+   ```
+
+   This opens the preview in the Windows browser from WSL.
+
+   Note: The command may return exit code 1 but still work - that's expected on WSL.
+
+   Tell the user:
+   ```
+   "Game preview opened in your browser. Test it out!
+
+   If the browser didn't open, manually navigate to:
+   \\wsl.localhost\Ubuntu\home\wsley\Coding\GameSkillsFrameWork\preview\index.html"
+   ```
+
 ---
 
 ## Quality Gates Reference
@@ -297,6 +318,14 @@ Final Quality Gates:
 New Patches Created:
   - PATCH-011: Animation timing on game over
   - PATCH-012: Coin spawn rate too high
+
+Opening game in browser for testing...
+  ✓ Preview launched
+
+Game preview opened in your browser. Test it out!
+
+If the browser didn't open, manually navigate to:
+\\wsl.localhost\Ubuntu\home\wsley\Coding\GameSkillsFrameWork\preview\index.html
 
 <promise>COMPLETE</promise>
 ```
