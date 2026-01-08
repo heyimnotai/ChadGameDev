@@ -1,0 +1,77 @@
+{
+  "version": "1.0.0",
+  "description": "Visual Ralph Loop configuration for game development",
+
+  "iteration": {
+    "maxIterations": 10,
+    "currentIteration": 0,
+    "delayBetweenIterations": 2000
+  },
+
+  "qualityGates": {
+    "renders": {
+      "enabled": true,
+      "description": "Game loads and displays without errors",
+      "checks": ["canvas_visible", "no_errors", "correct_dimensions"]
+    },
+    "layout": {
+      "enabled": true,
+      "description": "Respects safe areas and proper alignment",
+      "checks": ["safe_area_top", "safe_area_bottom", "no_overflow", "alignment"]
+    },
+    "visual": {
+      "enabled": true,
+      "description": "Colors, typography, and animations correct",
+      "checks": ["colors_match", "text_readable", "fps_60", "no_artifacts"]
+    },
+    "interaction": {
+      "enabled": true,
+      "description": "Touch events work with proper feedback",
+      "checks": ["touch_responds", "coordinates_correct", "feedback_visible"]
+    },
+    "logic": {
+      "enabled": true,
+      "description": "Game mechanics function correctly",
+      "checks": ["score_updates", "state_transitions", "win_lose_conditions"]
+    },
+    "polish": {
+      "enabled": false,
+      "description": "Game feels good (optional gate)",
+      "checks": ["animations_smooth", "effects_satisfying", "audio_synced"]
+    }
+  },
+
+  "screenshots": {
+    "captureOn": ["initial", "after_interaction", "state_change", "game_over"],
+    "directory": "screenshots",
+    "format": "png",
+    "waitBeforeCapture": 1000
+  },
+
+  "patches": {
+    "file": "patches.md",
+    "consultBeforeFix": true,
+    "documentNewPatches": true,
+    "graduationThreshold": 5
+  },
+
+  "selfPrompting": {
+    "enabled": true,
+    "preserveWorking": true,
+    "prioritizeBySeverity": true,
+    "maxIssuesPerIteration": 3
+  },
+
+  "stopConditions": {
+    "allGatesPass": true,
+    "maxIterationsReached": true,
+    "userInterrupt": true,
+    "noIssuesFound": true
+  },
+
+  "logging": {
+    "analysisLog": "ralph/analysis-log.md",
+    "verbose": true,
+    "saveScreenshots": true
+  }
+}

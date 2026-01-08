@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iOS Game Preview - Ralph Loop</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+        }
+
+        /* iPhone Frame */
+        .iphone-frame {
+            width: 390px;
+            height: 844px;
+            background: #1c1c1e;
+            border-radius: 47px;
+            padding: 12px;
+            box-shadow:
+                0 0 0 3px #2c2c2e,
+                0 0 0 6px #1c1c1e,
+                0 25px 50px rgba(0, 0, 0, 0.5),
+                inset 0 0 20px rgba(255, 255, 255, 0.02);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            border-radius: 39px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Dynamic Island */
+        .dynamic-island {
+            position: absolute;
+            top: 11px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 35px;
+            background: #000;
+            border-radius: 20px;
+            z-index: 100;
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+
+        /* Status Bar */
+        .status-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 54px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 28px 8px 28px;
+            z-index: 99;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .status-bar-left {
+            width: 60px;
+        }
+
+        .status-bar-right {
+            width: 80px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-time {
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+
+        .signal-bars {
+            display: flex;
+            gap: 1px;
+            align-items: flex-end;
+        }
+
+        .signal-bar {
+            width: 3px;
+            background: white;
+            border-radius: 1px;
+        }
+
+        .battery {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .battery-body {
+            width: 22px;
+            height: 11px;
+            border: 1.5px solid white;
+            border-radius: 3px;
+            padding: 1px;
+        }
+
+        .battery-level {
+            height: 100%;
+            width: 80%;
+            background: white;
+            border-radius: 1px;
+        }
+
+        .battery-cap {
+            width: 2px;
+            height: 4px;
+            background: white;
+            border-radius: 0 1px 1px 0;
+        }
+
+        /* Game Canvas */
+        .game-canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Home Indicator */
+        .home-indicator {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 134px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 100px;
+            z-index: 100;
+        }
+
+        /* Debug Overlay */
+        .debug-overlay {
+            position: absolute;
+            top: 60px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #00ff00;
+            font-family: 'SF Mono', 'Menlo', monospace;
+            font-size: 10px;
+            padding: 8px;
+            border-radius: 6px;
+            z-index: 101;
+            line-height: 1.5;
+            pointer-events: none;
+            display: none;
+        }
+
+        .debug-overlay.visible {
+            display: block;
+        }
+
+        /* Controls Panel */
+        .controls-panel {
+            background: rgba(28, 28, 30, 0.95);
+            border-radius: 16px;
+            padding: 24px;
+            color: white;
+            width: 300px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .controls-panel h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #fff;
+        }
+
+        .controls-panel h3 {
+            font-size: 13px;
+            font-weight: 600;
+            color: #8e8e93;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 16px 0 8px 0;
+        }
+
+        .control-group {
+            margin-bottom: 12px;
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .control-row:last-child {
+            border-bottom: none;
+        }
+
+        .control-label {
+            font-size: 14px;
+            color: #fff;
+        }
+
+        .control-value {
+            font-size: 14px;
+            color: #8e8e93;
+            font-family: 'SF Mono', monospace;
+        }
+
+        .btn {
+            background: #0a84ff;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #409cff;
+        }
+
+        .btn-secondary {
+            background: #3a3a3c;
+        }
+
+        .btn-secondary:hover {
+            background: #4a4a4c;
+        }
+
+        .btn-danger {
+            background: #ff453a;
+        }
+
+        .btn-danger:hover {
+            background: #ff6961;
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            width: 51px;
+            height: 31px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #39393d;
+            transition: 0.3s;
+            border-radius: 31px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 27px;
+            width: 27px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: #34c759;
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(20px);
+        }
+
+        /* Touch Indicator */
+        .touch-indicator {
+            position: absolute;
+            width: 44px;
+            height: 44px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 102;
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.5);
+            transition: opacity 0.1s, transform 0.1s;
+        }
+
+        .touch-indicator.active {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* Log Output */
+        .log-output {
+            background: #000;
+            border-radius: 8px;
+            padding: 12px;
+            font-family: 'SF Mono', monospace;
+            font-size: 11px;
+            color: #00ff00;
+            max-height: 150px;
+            overflow-y: auto;
+            margin-top: 12px;
+        }
+
+        .log-entry {
+            margin-bottom: 4px;
+            word-break: break-all;
+        }
+
+        .log-entry.error {
+            color: #ff453a;
+        }
+
+        .log-entry.warn {
+            color: #ffd60a;
+        }
+
+        .log-entry.info {
+            color: #0a84ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- iPhone Frame -->
+        <div class="iphone-frame">
+            <div class="screen">
+                <!-- Dynamic Island -->
+                <div class="dynamic-island"></div>
+
+                <!-- Status Bar -->
+                <div class="status-bar">
+                    <div class="status-bar-left">
+                        <span class="status-time" id="statusTime">9:41</span>
+                    </div>
+                    <div class="status-bar-right">
+                        <div class="signal-bars">
+                            <div class="signal-bar" style="height: 4px;"></div>
+                            <div class="signal-bar" style="height: 6px;"></div>
+                            <div class="signal-bar" style="height: 8px;"></div>
+                            <div class="signal-bar" style="height: 10px;"></div>
+                        </div>
+                        <svg width="15" height="11" viewBox="0 0 15 11" fill="white">
+                            <path d="M7.5 2.5C9.5 2.5 11.3 3.3 12.6 4.6L14 3.2C12.3 1.5 10 0.5 7.5 0.5C5 0.5 2.7 1.5 1 3.2L2.4 4.6C3.7 3.3 5.5 2.5 7.5 2.5ZM7.5 5.5C8.6 5.5 9.6 5.9 10.4 6.6L11.8 5.2C10.6 4.1 9.1 3.5 7.5 3.5C5.9 3.5 4.4 4.1 3.2 5.2L4.6 6.6C5.4 5.9 6.4 5.5 7.5 5.5ZM7.5 8.5C6.9 8.5 6.4 8.7 6 9.1L7.5 10.5L9 9.1C8.6 8.7 8.1 8.5 7.5 8.5Z"/>
+                        </svg>
+                        <div class="battery">
+                            <div class="battery-body">
+                                <div class="battery-level"></div>
+                            </div>
+                            <div class="battery-cap"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Game Canvas Container -->
+                <div class="game-canvas-container">
+                    <canvas id="gameCanvas"></canvas>
+                </div>
+
+                <!-- Debug Overlay -->
+                <div class="debug-overlay" id="debugOverlay">
+                    <div>FPS: <span id="debugFps">60</span></div>
+                    <div>State: <span id="debugState">running</span></div>
+                    <div>Score: <span id="debugScore">0</span></div>
+                    <div>Objects: <span id="debugObjects">0</span></div>
+                    <div>Touch: <span id="debugTouch">-</span></div>
+                </div>
+
+                <!-- Home Indicator -->
+                <div class="home-indicator"></div>
+
+                <!-- Touch Indicator -->
+                <div class="touch-indicator" id="touchIndicator"></div>
+            </div>
+        </div>
+
+        <!-- Controls Panel -->
+        <div class="controls-panel">
+            <h2>Ralph Loop Preview</h2>
+
+            <h3>Game Info</h3>
+            <div class="control-group">
+                <div class="control-row">
+                    <span class="control-label">Resolution</span>
+                    <span class="control-value" id="infoResolution">1179x2556</span>
+                </div>
+                <div class="control-row">
+                    <span class="control-label">Scale</span>
+                    <span class="control-value">3x Retina</span>
+                </div>
+                <div class="control-row">
+                    <span class="control-label">Frame</span>
+                    <span class="control-value">iPhone 15</span>
+                </div>
+            </div>
+
+            <h3>Controls</h3>
+            <div class="control-group">
+                <div class="control-row">
+                    <span class="control-label">Show Debug</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggleDebug">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="control-row">
+                    <span class="control-label">Show Touches</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggleTouches" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="control-row">
+                    <span class="control-label">Pause Game</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="togglePause">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <h3>Actions</h3>
+            <button class="btn" id="btnScreenshot">Take Screenshot</button>
+            <button class="btn btn-secondary" id="btnRestart">Restart Game</button>
+            <button class="btn btn-danger" id="btnReset">Reset State</button>
+
+            <h3>Console</h3>
+            <div class="log-output" id="logOutput">
+                <div class="log-entry info">[System] Preview initialized</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="game-renderer.js"></script>
+    <script>
+        // Initialize the game system
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // iPhone 15 dimensions at 3x scale
+        const SCREEN_WIDTH = 1179;
+        const SCREEN_HEIGHT = 2556;
+        const SCALE = 3;
+
+        // Set canvas resolution for Retina
+        canvas.width = SCREEN_WIDTH;
+        canvas.height = SCREEN_HEIGHT;
+
+        // Status bar time
+        function updateStatusTime() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('statusTime').textContent = `${hours}:${minutes}`;
+        }
+        updateStatusTime();
+        setInterval(updateStatusTime, 60000);
+
+        // Debug overlay
+        const debugOverlay = document.getElementById('debugOverlay');
+        const toggleDebug = document.getElementById('toggleDebug');
+        toggleDebug.addEventListener('change', (e) => {
+            debugOverlay.classList.toggle('visible', e.target.checked);
+        });
+
+        // Touch visualization
+        const touchIndicator = document.getElementById('touchIndicator');
+        const toggleTouches = document.getElementById('toggleTouches');
+        let showTouches = true;
+        toggleTouches.addEventListener('change', (e) => {
+            showTouches = e.target.checked;
+        });
+
+        // Transform screen coordinates to canvas coordinates
+        function screenToCanvas(clientX, clientY, rect) {
+            const x = ((clientX - rect.left) / rect.width) * SCREEN_WIDTH;
+            const y = ((clientY - rect.top) / rect.height) * SCREEN_HEIGHT;
+            return { x: Math.round(x), y: Math.round(y) };
+        }
+
+        // Touch/click event handling
+        const screen = document.querySelector('.screen');
+        function handleTouch(e, type) {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches ? e.touches[0] : e;
+            const coords = screenToCanvas(touch.clientX, touch.clientY, rect);
+
+            // Show touch indicator
+            if (showTouches) {
+                const screenRect = screen.getBoundingClientRect();
+                touchIndicator.style.left = (touch.clientX - screenRect.left) + 'px';
+                touchIndicator.style.top = (touch.clientY - screenRect.top) + 'px';
+                touchIndicator.classList.add('active');
+                setTimeout(() => touchIndicator.classList.remove('active'), 150);
+            }
+
+            // Update debug
+            document.getElementById('debugTouch').textContent = `${coords.x}, ${coords.y}`;
+
+            // Dispatch to game
+            if (window.gameInstance && window.gameInstance.handleTouch) {
+                window.gameInstance.handleTouch(type, coords.x, coords.y);
+            }
+
+            log(`Touch ${type}: (${coords.x}, ${coords.y})`);
+        }
+
+        canvas.addEventListener('mousedown', (e) => handleTouch(e, 'began'));
+        canvas.addEventListener('mousemove', (e) => {
+            if (e.buttons > 0) handleTouch(e, 'moved');
+        });
+        canvas.addEventListener('mouseup', (e) => handleTouch(e, 'ended'));
+        canvas.addEventListener('touchstart', (e) => handleTouch(e, 'began'));
+        canvas.addEventListener('touchmove', (e) => handleTouch(e, 'moved'));
+        canvas.addEventListener('touchend', (e) => handleTouch(e, 'ended'));
+
+        // Pause control
+        const togglePause = document.getElementById('togglePause');
+        let isPaused = false;
+        togglePause.addEventListener('change', (e) => {
+            isPaused = e.target.checked;
+            document.getElementById('debugState').textContent = isPaused ? 'paused' : 'running';
+            log(isPaused ? 'Game paused' : 'Game resumed', 'warn');
+        });
+
+        // Screenshot function
+        document.getElementById('btnScreenshot').addEventListener('click', () => {
+            const dataUrl = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = `screenshot-${Date.now()}.png`;
+            link.href = dataUrl;
+            link.click();
+            log('Screenshot saved', 'info');
+        });
+
+        // Restart button
+        document.getElementById('btnRestart').addEventListener('click', () => {
+            if (window.gameInstance && window.gameInstance.restart) {
+                window.gameInstance.restart();
+                log('Game restarted', 'info');
+            }
+        });
+
+        // Reset button
+        document.getElementById('btnReset').addEventListener('click', () => {
+            if (window.gameInstance && window.gameInstance.reset) {
+                window.gameInstance.reset();
+            }
+            document.getElementById('debugScore').textContent = '0';
+            document.getElementById('debugObjects').textContent = '0';
+            log('State reset', 'warn');
+        });
+
+        // Logging system
+        const logOutput = document.getElementById('logOutput');
+        function log(message, type = 'log') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+            entry.textContent = `[${time}] ${message}`;
+            logOutput.appendChild(entry);
+            logOutput.scrollTop = logOutput.scrollHeight;
+
+            // Keep only last 50 entries
+            while (logOutput.children.length > 50) {
+                logOutput.removeChild(logOutput.firstChild);
+            }
+        }
+
+        // FPS counter
+        let frameCount = 0;
+        let lastFpsUpdate = performance.now();
+
+        function updateFps() {
+            frameCount++;
+            const now = performance.now();
+            if (now - lastFpsUpdate >= 1000) {
+                document.getElementById('debugFps').textContent = frameCount;
+                frameCount = 0;
+                lastFpsUpdate = now;
+            }
+        }
+
+        // Main game loop
+        let lastTime = 0;
+        function gameLoop(timestamp) {
+            const deltaTime = timestamp - lastTime;
+            lastTime = timestamp;
+
+            if (!isPaused) {
+                // Clear canvas
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+                // Update and render game
+                if (window.gameInstance) {
+                    if (window.gameInstance.update) {
+                        window.gameInstance.update(deltaTime);
+                    }
+                    if (window.gameInstance.render) {
+                        window.gameInstance.render(ctx, SCREEN_WIDTH, SCREEN_HEIGHT);
+                    }
+
+                    // Update debug info
+                    if (window.gameInstance.getScore) {
+                        document.getElementById('debugScore').textContent = window.gameInstance.getScore();
+                    }
+                    if (window.gameInstance.getObjectCount) {
+                        document.getElementById('debugObjects').textContent = window.gameInstance.getObjectCount();
+                    }
+                }
+            }
+
+            updateFps();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Export for external access
+        window.preview = {
+            canvas,
+            ctx,
+            log,
+            screenToCanvas,
+            SCREEN_WIDTH,
+            SCREEN_HEIGHT,
+            SCALE
+        };
+
+        // Start the loop
+        log('Starting game loop...', 'info');
+        requestAnimationFrame(gameLoop);
+    </script>
+    <script src="game.js"></script>
+</body>
+</html>

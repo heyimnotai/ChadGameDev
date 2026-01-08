@@ -1,0 +1,48 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash(git *)",
+      "Bash(npm *)",
+      "Bash(npx *)",
+      "Bash(open *)",
+      "Bash(xcodebuild *)",
+      "Bash(xcrun *)",
+      "Bash(ls *)",
+      "Bash(mkdir *)",
+      "Bash(find *)",
+      "Bash(cat *)",
+      "mcp__XcodeBuildMCP__*",
+      "mcp__playwright__*"
+    ],
+    "deny": []
+  },
+  "env": {
+    "NODE_ENV": "development",
+    "PLAYWRIGHT_HEADLESS": "false"
+  },
+  "mcpServers": {
+    "XcodeBuildMCP": {
+      "enabled": true
+    },
+    "playwright": {
+      "enabled": true
+    }
+  },
+  "features": {
+    "todoList": true,
+    "skills": true,
+    "commands": true,
+    "agents": true,
+    "hooks": true
+  },
+  "project": {
+    "name": "Ralph Loop iOS Game Development",
+    "type": "ios-game",
+    "previewPath": "preview/index.html"
+  }
+}

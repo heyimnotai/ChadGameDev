@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Screenshots (generated during Ralph loops)
+screenshots/
+!screenshots/.gitkeep
+
+# Session state (regenerated each session)
+ralph/session-state.json
+ralph/current-prompt.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build outputs
+build/
+dist/
+*.xcarchive
+
+# Xcode
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# Local settings (may contain user-specific paths)
+.claude/settings.local.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
