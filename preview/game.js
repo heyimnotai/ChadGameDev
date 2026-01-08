@@ -76,6 +76,10 @@ class BlockBlast {
         this.selectedBlock = null;
         this.dragOffset = new Vector2(0, 0);
 
+        // Shadow and ghost preview elements
+        this.shadowNode = null;
+        this.ghostCells = [];
+
         // Create scene
         this.scene = new Scene({ width: this.width, height: this.height });
         this.scene.backgroundColor = new Color(0.08, 0.08, 0.12);
@@ -128,10 +132,11 @@ class BlockBlast {
     }
 
     createUI() {
-        // Title
+        // Title - explicitly set alignment to ensure centering
         this.titleLabel = new LabelNode('BLOCK BLAST');
         this.titleLabel.fontSize = 72;
         this.titleLabel.fontColor = Color.white;
+        this.titleLabel.horizontalAlignment = 'center';
         this.titleLabel.position = new Vector2(this.width / 2, this.safeTop + 60);
         this.scene.addChild(this.titleLabel);
 
@@ -292,6 +297,82 @@ class BlockBlast {
         const cellY = Math.floor(gridLocalY / this.cellSize);
 
         return { x: cellX, y: cellY };
+    }
+
+    createShadow(slot) {
+        // Create a dark semi-transparent copy of the block for shadow effect
+        const { shape, color } = slot;
+        const shadowColor = Color.black.withOpacity(0.3);
+        const container = new Node();
+
+        // Calculate bounds (same as createBlockShape)
+        let minX = Infinity, maxX = -Infinity;
+        let minY = Infinity, maxY = -Infinity;
+        for (const [x, y] of shape) {
+            minX = Math.min(minX, x);
+            maxX = Math.max(maxX, x);
+            minY = Math.min(minY, y);
+            maxY = Math.max(maxY, y);
+        }
+
+        const width = maxX - minX + 1;
+        const height = maxY - minY + 1;
+        const scale = 1; // Shadow uses full scale when picked up
+        const offsetX = -width * this.cellSize * scale / 2 + this.cellSize * scale / 2;
+        const offsetY = -height * this.cellSize * scale / 2 + this.cellSize * scale / 2;
+
+        for (const [x, y] of shape) {
+            const cell = new SpriteNode(shadowColor, {
+                width: (this.cellSize - 8) * scale,
+                height: (this.cellSize - 8) * scale
+            });
+            cell.cornerRadius = 10 * scale;
+            cell.position = new Vector2(
+                (x - minX) * this.cellSize * scale + offsetX,
+                (y - minY) * this.cellSize * scale + offsetY
+            );
+            container.addChild(cell);
+        }
+
+        return container;
+    }
+
+    updateGhostPreview(slot, gridX, gridY) {
+        // Clear existing ghost cells
+        this.clearGhostCells();
+
+        // Only show ghost if placement is valid
+        if (!this.canPlaceBlock(slot.shape, gridX, gridY)) {
+            return;
+        }
+
+        // Create ghost cells at ~30% opacity
+        const ghostColor = slot.color.withOpacity(0.3);
+
+        for (const [dx, dy] of slot.shape) {
+            const x = gridX + dx;
+            const y = gridY + dy;
+
+            const ghostCell = new SpriteNode(ghostColor, {
+                width: this.cellSize - 8,
+                height: this.cellSize - 8
+            });
+            ghostCell.cornerRadius = 10;
+            ghostCell.position = new Vector2(
+                this.gridX + x * this.cellSize + this.cellSize / 2,
+                this.gridY + y * this.cellSize + this.cellSize / 2
+            );
+            ghostCell.zPosition = 4; // Between grid cells (1) and placed blocks (5)
+            this.scene.addChild(ghostCell);
+            this.ghostCells.push(ghostCell);
+        }
+    }
+
+    clearGhostCells() {
+        for (const ghost of this.ghostCells) {
+            ghost.removeFromParent();
+        }
+        this.ghostCells = [];
     }
 
     canPlaceBlock(shape, gridX, gridY) {

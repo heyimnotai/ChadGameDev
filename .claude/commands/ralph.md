@@ -4,24 +4,14 @@ Run the Visual Ralph Loop to autonomously develop and polish games through itera
 
 ## Usage
 
-**For fully hands-off operation, run Claude with skip-permissions:**
-
-```bash
-claude --dangerously-skip-permissions
-```
-
-Then run:
+Just run:
 ```
 /ralph
 ```
 
-This eliminates permission prompts during project setup and development.
+**Invoking `/ralph` grants permission for full automation.** Sub-agents will run with `--dangerously-skip-permissions` automatically - you don't need to start Claude with any special flags.
 
-**Standard mode** (with permission prompts):
-```
-claude
-/ralph
-```
+The main Claude session handles user interaction (project selection, cycle count). Once you confirm, sub-agents take over and run autonomously without prompts.
 
 ---
 
@@ -298,6 +288,8 @@ After project selection (new or continue):
 ### Phase 3: Sub-Agent Architecture
 
 **Ralph uses sub-agents for hands-off development.** The main orchestrator manages the loop while sub-agents do the actual coding work with full permissions.
+
+**IMPORTANT: Sub-agents ALWAYS run with `--dangerously-skip-permissions`** - this is automatic when the user invokes `/ralph`. The user grants permission by running the command.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
