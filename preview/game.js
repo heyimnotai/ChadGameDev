@@ -1,12 +1,11 @@
 /**
- * Tap the Circle - Demo Game
+ * Block Blast - Puzzle Game
  *
- * A simple game demonstrating the Ralph Loop preview system.
- * Tap the circle to score points. The circle moves to a random
- * position after each tap.
+ * Place block shapes onto the grid to clear rows and columns.
+ * Clear lines to score points and keep playing!
  */
 
-class TapTheCircle {
+class BlockBlast {
     constructor() {
         // Screen dimensions
         this.width = GameRenderer.SCREEN_WIDTH;
@@ -16,90 +15,110 @@ class TapTheCircle {
         this.safeTop = GameRenderer.SAFE_AREA.top;
         this.safeBottom = GameRenderer.SAFE_AREA.bottom;
 
+        // Grid configuration
+        this.gridSize = 8;
+        this.cellSize = 120; // Size of each cell in pixels
+        this.gridPadding = 30;
+
+        // Calculate grid position (centered)
+        this.gridWidth = this.gridSize * this.cellSize;
+        this.gridHeight = this.gridSize * this.cellSize;
+        this.gridX = (this.width - this.gridWidth) / 2;
+        this.gridY = this.safeTop + 280;
+
         // Game state
         this.score = 0;
         this.highScore = 0;
-        this.circleRadius = 90;  // 30pt at 3x
-        this.isAnimating = false;
+        this.gameOver = false;
+        this.grid = this.createEmptyGrid();
+
+        // Block colors
+        this.colors = [
+            Color.cyan,
+            Color.blue,
+            Color.orange,
+            Color.yellow,
+            Color.green,
+            Color.purple,
+            Color.red
+        ];
+
+        // Available block shapes (relative positions)
+        this.shapes = [
+            // Single
+            [[0, 0]],
+            // Line 2
+            [[0, 0], [1, 0]],
+            [[0, 0], [0, 1]],
+            // Line 3
+            [[0, 0], [1, 0], [2, 0]],
+            [[0, 0], [0, 1], [0, 2]],
+            // Line 4
+            [[0, 0], [1, 0], [2, 0], [3, 0]],
+            [[0, 0], [0, 1], [0, 2], [0, 3]],
+            // L shapes
+            [[0, 0], [1, 0], [0, 1]],
+            [[0, 0], [1, 0], [1, 1]],
+            [[0, 0], [0, 1], [1, 1]],
+            [[1, 0], [0, 1], [1, 1]],
+            // Square
+            [[0, 0], [1, 0], [0, 1], [1, 1]],
+            // T shape
+            [[0, 0], [1, 0], [2, 0], [1, 1]],
+            // Big L
+            [[0, 0], [0, 1], [0, 2], [1, 2], [2, 2]],
+            // 3x3 square
+            [[0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [2, 1], [0, 2], [1, 2], [2, 2]]
+        ];
+
+        // Current draggable blocks
+        this.blockSlots = [];
+        this.selectedBlock = null;
+        this.dragOffset = new Vector2(0, 0);
 
         // Create scene
         this.scene = new Scene({ width: this.width, height: this.height });
-        this.scene.backgroundColor = new Color(0.1, 0.1, 0.15);
+        this.scene.backgroundColor = new Color(0.08, 0.08, 0.12);
 
-        // Particle emitter for tap effects
+        // Particle emitter
         this.particles = new ParticleEmitter();
-        this.particles.particleColor = Color.cyan;
-        this.particles.particleSize = 12;
-        this.particles.particleLifetime = 500;
-        this.particles.particleSpeed = 300;
-        this.particles.particleSpeedRange = 150;
+        this.particles.particleColor = Color.yellow;
+        this.particles.particleSize = 18;
+        this.particles.particleLifetime = 600;
+        this.particles.particleSpeed = 400;
+        this.particles.particleSpeedRange = 200;
 
         this.setupGame();
     }
 
+    createEmptyGrid() {
+        const grid = [];
+        for (let y = 0; y < this.gridSize; y++) {
+            grid[y] = [];
+            for (let x = 0; x < this.gridSize; x++) {
+                grid[y][x] = null;
+            }
+        }
+        return grid;
+    }
+
     setupGame() {
-        // Background gradient (simulated with rectangles)
         this.createBackground();
-
-        // Create the tappable circle
-        this.circle = ShapeNode.circle(this.circleRadius);
-        this.circle.fillColor = Color.cyan;
-        this.circle.strokeColor = Color.white;
-        this.circle.lineWidth = 6;
-        this.circle.position = this.getRandomPosition();
-        this.scene.addChild(this.circle);
-
-        // Add inner glow effect
-        this.innerCircle = ShapeNode.circle(this.circleRadius * 0.6);
-        this.innerCircle.fillColor = Color.white.withOpacity(0.3);
-        this.innerCircle.strokeColor = Color.clear;
-        this.circle.addChild(this.innerCircle);
-
-        // Score label
-        this.scoreLabel = new LabelNode('0');
-        this.scoreLabel.fontSize = 144;
-        this.scoreLabel.fontColor = Color.white;
-        this.scoreLabel.position = new Vector2(this.width / 2, this.safeTop + 150);
-        this.scene.addChild(this.scoreLabel);
-
-        // Score title
-        this.scoreTitleLabel = new LabelNode('SCORE');
-        this.scoreTitleLabel.fontSize = 42;
-        this.scoreTitleLabel.fontColor = Color.gray;
-        this.scoreTitleLabel.position = new Vector2(this.width / 2, this.safeTop + 60);
-        this.scene.addChild(this.scoreTitleLabel);
-
-        // High score
-        this.highScoreLabel = new LabelNode('BEST: 0');
-        this.highScoreLabel.fontSize = 36;
-        this.highScoreLabel.fontColor = Color.gray;
-        this.highScoreLabel.position = new Vector2(this.width / 2, this.height - this.safeBottom - 80);
-        this.scene.addChild(this.highScoreLabel);
-
-        // Instructions
-        this.instructionLabel = new LabelNode('TAP THE CIRCLE');
-        this.instructionLabel.fontSize = 48;
-        this.instructionLabel.fontColor = Color.white.withOpacity(0.5);
-        this.instructionLabel.position = new Vector2(this.width / 2, this.height - this.safeBottom - 150);
-        this.scene.addChild(this.instructionLabel);
-
-        // Add particles to scene
+        this.createUI();
+        this.createGrid();
+        this.spawnNewBlocks();
         this.scene.addChild(this.particles);
-
-        // Start idle animation
-        this.startIdleAnimation();
     }
 
     createBackground() {
-        // Create subtle gradient effect with multiple layers
+        // Gradient background layers
         const colors = [
-            new Color(0.05, 0.05, 0.12),
-            new Color(0.08, 0.08, 0.18),
-            new Color(0.1, 0.1, 0.2)
+            new Color(0.05, 0.05, 0.10),
+            new Color(0.08, 0.08, 0.14),
+            new Color(0.06, 0.06, 0.11)
         ];
 
         const layerHeight = this.height / 3;
-
         for (let i = 0; i < 3; i++) {
             const bg = new SpriteNode(colors[i], { width: this.width, height: layerHeight + 10 });
             bg.position = new Vector2(this.width / 2, layerHeight * i + layerHeight / 2);
@@ -108,50 +127,343 @@ class TapTheCircle {
         }
     }
 
-    getRandomPosition() {
-        // Keep circle within safe playable area
-        const padding = this.circleRadius + 60;
-        const minY = this.safeTop + 300;  // Below score display
-        const maxY = this.height - this.safeBottom - 200;  // Above instructions
+    createUI() {
+        // Title
+        this.titleLabel = new LabelNode('BLOCK BLAST');
+        this.titleLabel.fontSize = 72;
+        this.titleLabel.fontColor = Color.white;
+        this.titleLabel.position = new Vector2(this.width / 2, this.safeTop + 60);
+        this.scene.addChild(this.titleLabel);
 
-        const x = padding + Math.random() * (this.width - padding * 2);
-        const y = minY + Math.random() * (maxY - minY);
+        // Score
+        this.scoreLabel = new LabelNode('0');
+        this.scoreLabel.fontSize = 120;
+        this.scoreLabel.fontColor = Color.white;
+        this.scoreLabel.position = new Vector2(this.width / 2, this.safeTop + 170);
+        this.scene.addChild(this.scoreLabel);
 
-        return new Vector2(x, y);
+        // High score
+        this.highScoreLabel = new LabelNode('BEST: 0');
+        this.highScoreLabel.fontSize = 36;
+        this.highScoreLabel.fontColor = Color.gray;
+        this.highScoreLabel.position = new Vector2(this.width / 2, this.safeTop + 240);
+        this.scene.addChild(this.highScoreLabel);
+
+        // Game over label (hidden initially)
+        this.gameOverLabel = new LabelNode('GAME OVER');
+        this.gameOverLabel.fontSize = 96;
+        this.gameOverLabel.fontColor = Color.red;
+        this.gameOverLabel.position = new Vector2(this.width / 2, this.height / 2);
+        this.gameOverLabel.isHidden = true;
+        this.gameOverLabel.zPosition = 100;
+        this.scene.addChild(this.gameOverLabel);
+
+        // Tap to restart label
+        this.restartLabel = new LabelNode('TAP TO RESTART');
+        this.restartLabel.fontSize = 48;
+        this.restartLabel.fontColor = Color.white.withOpacity(0.7);
+        this.restartLabel.position = new Vector2(this.width / 2, this.height / 2 + 100);
+        this.restartLabel.isHidden = true;
+        this.restartLabel.zPosition = 100;
+        this.scene.addChild(this.restartLabel);
     }
 
-    startIdleAnimation() {
-        // Subtle pulsing animation
-        const scaleUp = Action.scaleTo(1.1, 800);
-        scaleUp.timingFunction = Action.easeInOut;
+    createGrid() {
+        // Grid background
+        const gridBg = new SpriteNode(new Color(0.12, 0.12, 0.18), {
+            width: this.gridWidth + this.gridPadding * 2,
+            height: this.gridHeight + this.gridPadding * 2
+        });
+        gridBg.cornerRadius = 24;
+        gridBg.position = new Vector2(
+            this.gridX + this.gridWidth / 2,
+            this.gridY + this.gridHeight / 2
+        );
+        gridBg.zPosition = 0;
+        this.scene.addChild(gridBg);
 
-        const scaleDown = Action.scaleTo(1.0, 800);
-        scaleDown.timingFunction = Action.easeInOut;
+        // Grid cells
+        this.gridCells = [];
+        for (let y = 0; y < this.gridSize; y++) {
+            this.gridCells[y] = [];
+            for (let x = 0; x < this.gridSize; x++) {
+                const cell = new SpriteNode(new Color(0.15, 0.15, 0.22), {
+                    width: this.cellSize - 6,
+                    height: this.cellSize - 6
+                });
+                cell.cornerRadius = 12;
+                cell.position = new Vector2(
+                    this.gridX + x * this.cellSize + this.cellSize / 2,
+                    this.gridY + y * this.cellSize + this.cellSize / 2
+                );
+                cell.zPosition = 1;
+                this.scene.addChild(cell);
+                this.gridCells[y][x] = cell;
+            }
+        }
 
-        const pulse = Action.sequence([scaleUp, scaleDown]);
-        const repeatPulse = Action.repeatForever(pulse);
-
-        this.scene.run(this.circle, repeatPulse, 'idle');
+        // Placed blocks container (will hold colored blocks)
+        this.placedBlocks = [];
     }
 
-    handleTouch(type, x, y) {
-        if (type !== 'began') return;
-        if (this.isAnimating) return;
+    spawnNewBlocks() {
+        // Clear old block slots
+        for (const slot of this.blockSlots) {
+            if (slot.node) {
+                slot.node.removeFromParent();
+            }
+        }
+        this.blockSlots = [];
 
-        const touchPoint = new Vector2(x, y);
+        // Spawn 3 new random blocks
+        const slotY = this.gridY + this.gridHeight + 180;
+        const slotSpacing = this.width / 4;
 
-        // Check if circle was tapped
-        if (this.circle.contains(touchPoint)) {
-            this.onCircleTapped(touchPoint);
+        for (let i = 0; i < 3; i++) {
+            const shape = this.shapes[Math.floor(Math.random() * this.shapes.length)];
+            const color = this.colors[Math.floor(Math.random() * this.colors.length)];
+            const slotX = slotSpacing * (i + 1);
+
+            const block = this.createBlockShape(shape, color, 0.6);
+            block.position = new Vector2(slotX, slotY);
+            block.zPosition = 10;
+            this.scene.addChild(block);
+
+            this.blockSlots.push({
+                shape,
+                color,
+                node: block,
+                originalPosition: new Vector2(slotX, slotY),
+                placed: false,
+                scale: 0.6
+            });
         }
     }
 
-    onCircleTapped(touchPoint) {
-        this.isAnimating = true;
+    createBlockShape(shape, color, scale = 1) {
+        const container = new Node();
 
-        // Update score
-        this.score++;
-        this.scoreLabel.text = this.score.toString();
+        // Calculate bounds
+        let minX = Infinity, maxX = -Infinity;
+        let minY = Infinity, maxY = -Infinity;
+        for (const [x, y] of shape) {
+            minX = Math.min(minX, x);
+            maxX = Math.max(maxX, x);
+            minY = Math.min(minY, y);
+            maxY = Math.max(maxY, y);
+        }
+
+        const width = maxX - minX + 1;
+        const height = maxY - minY + 1;
+        const offsetX = -width * this.cellSize * scale / 2 + this.cellSize * scale / 2;
+        const offsetY = -height * this.cellSize * scale / 2 + this.cellSize * scale / 2;
+
+        for (const [x, y] of shape) {
+            const cell = new SpriteNode(color, {
+                width: (this.cellSize - 8) * scale,
+                height: (this.cellSize - 8) * scale
+            });
+            cell.cornerRadius = 10 * scale;
+            cell.position = new Vector2(
+                (x - minX) * this.cellSize * scale + offsetX,
+                (y - minY) * this.cellSize * scale + offsetY
+            );
+            container.addChild(cell);
+
+            // Inner highlight
+            const highlight = new SpriteNode(Color.white.withOpacity(0.2), {
+                width: (this.cellSize - 24) * scale,
+                height: (this.cellSize - 24) * scale
+            });
+            highlight.cornerRadius = 6 * scale;
+            highlight.position = new Vector2(0, -4 * scale);
+            cell.addChild(highlight);
+        }
+
+        container.shapeData = { shape, color, width, height };
+        return container;
+    }
+
+    getGridPosition(screenX, screenY) {
+        const gridLocalX = screenX - this.gridX;
+        const gridLocalY = screenY - this.gridY;
+
+        const cellX = Math.floor(gridLocalX / this.cellSize);
+        const cellY = Math.floor(gridLocalY / this.cellSize);
+
+        return { x: cellX, y: cellY };
+    }
+
+    canPlaceBlock(shape, gridX, gridY) {
+        for (const [dx, dy] of shape) {
+            const x = gridX + dx;
+            const y = gridY + dy;
+
+            if (x < 0 || x >= this.gridSize || y < 0 || y >= this.gridSize) {
+                return false;
+            }
+
+            if (this.grid[y][x] !== null) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    placeBlock(slot, gridX, gridY) {
+        const { shape, color } = slot;
+
+        // Place each cell
+        for (const [dx, dy] of shape) {
+            const x = gridX + dx;
+            const y = gridY + dy;
+
+            this.grid[y][x] = color;
+
+            // Create visual block
+            const cell = new SpriteNode(color, {
+                width: this.cellSize - 8,
+                height: this.cellSize - 8
+            });
+            cell.cornerRadius = 10;
+            cell.position = new Vector2(
+                this.gridX + x * this.cellSize + this.cellSize / 2,
+                this.gridY + y * this.cellSize + this.cellSize / 2
+            );
+            cell.zPosition = 5;
+            cell.alpha = 0;
+            this.scene.addChild(cell);
+            this.placedBlocks.push({ node: cell, x, y });
+
+            // Fade in animation
+            const fadeIn = Action.fadeIn(150);
+            this.scene.run(cell, fadeIn);
+        }
+
+        // Remove the slot
+        slot.node.removeFromParent();
+        slot.placed = true;
+
+        // Add score for placing
+        this.addScore(shape.length * 10);
+
+        // Check for completed lines
+        this.checkAndClearLines();
+
+        // Check if we need new blocks
+        const allPlaced = this.blockSlots.every(s => s.placed);
+        if (allPlaced) {
+            setTimeout(() => this.spawnNewBlocks(), 300);
+        }
+
+        // Check for game over
+        this.checkGameOver();
+
+        HapticFeedback.impact('medium');
+    }
+
+    checkAndClearLines() {
+        const rowsToClear = [];
+        const colsToClear = [];
+
+        // Check rows
+        for (let y = 0; y < this.gridSize; y++) {
+            let full = true;
+            for (let x = 0; x < this.gridSize; x++) {
+                if (this.grid[y][x] === null) {
+                    full = false;
+                    break;
+                }
+            }
+            if (full) rowsToClear.push(y);
+        }
+
+        // Check columns
+        for (let x = 0; x < this.gridSize; x++) {
+            let full = true;
+            for (let y = 0; y < this.gridSize; y++) {
+                if (this.grid[y][x] === null) {
+                    full = false;
+                    break;
+                }
+            }
+            if (full) colsToClear.push(x);
+        }
+
+        // Clear lines with animation
+        const cellsToClear = new Set();
+
+        for (const y of rowsToClear) {
+            for (let x = 0; x < this.gridSize; x++) {
+                cellsToClear.add(`${x},${y}`);
+            }
+        }
+
+        for (const x of colsToClear) {
+            for (let y = 0; y < this.gridSize; y++) {
+                cellsToClear.add(`${x},${y}`);
+            }
+        }
+
+        if (cellsToClear.size > 0) {
+            // Score based on lines cleared
+            const linesCleared = rowsToClear.length + colsToClear.length;
+            const bonus = linesCleared > 1 ? linesCleared * 50 : 0;
+            this.addScore(cellsToClear.size * 20 + bonus);
+
+            // Clear cells
+            for (const key of cellsToClear) {
+                const [x, y] = key.split(',').map(Number);
+                this.grid[y][x] = null;
+
+                // Particles at cleared cell
+                this.particles.position = new Vector2(
+                    this.gridX + x * this.cellSize + this.cellSize / 2,
+                    this.gridY + y * this.cellSize + this.cellSize / 2
+                );
+                this.particles.burst(5);
+            }
+
+            // Remove visual blocks
+            for (let i = this.placedBlocks.length - 1; i >= 0; i--) {
+                const block = this.placedBlocks[i];
+                if (cellsToClear.has(`${block.x},${block.y}`)) {
+                    const fadeOut = Action.sequence([
+                        Action.scaleTo(1.2, 100),
+                        Action.fadeOut(150)
+                    ]);
+                    this.scene.run(block.node, fadeOut);
+                    setTimeout(() => block.node.removeFromParent(), 300);
+                    this.placedBlocks.splice(i, 1);
+                }
+            }
+
+            HapticFeedback.notification('success');
+        }
+    }
+
+    checkGameOver() {
+        // Check if any remaining block can be placed
+        const remainingSlots = this.blockSlots.filter(s => !s.placed);
+
+        for (const slot of remainingSlots) {
+            for (let y = 0; y < this.gridSize; y++) {
+                for (let x = 0; x < this.gridSize; x++) {
+                    if (this.canPlaceBlock(slot.shape, x, y)) {
+                        return; // At least one block can be placed
+                    }
+                }
+            }
+        }
+
+        // No valid moves - game over
+        if (remainingSlots.length > 0) {
+            this.triggerGameOver();
+        }
+    }
+
+    triggerGameOver() {
+        this.gameOver = true;
 
         // Update high score
         if (this.score > this.highScore) {
@@ -159,69 +471,88 @@ class TapTheCircle {
             this.highScoreLabel.text = `BEST: ${this.highScore}`;
         }
 
-        // Particle burst at tap location
-        this.particles.position = touchPoint;
-        this.particles.burst(15);
+        // Show game over UI
+        this.gameOverLabel.isHidden = false;
+        this.restartLabel.isHidden = false;
 
-        // Haptic feedback (in real iOS)
-        HapticFeedback.impact('medium');
+        // Animate
+        this.gameOverLabel.scale = new Vector2(0.5, 0.5);
+        const scaleUp = Action.scaleTo(1, 300);
+        scaleUp.timingFunction = Action.easeOut;
+        this.scene.run(this.gameOverLabel, scaleUp);
 
-        // Circle tap animation
-        this.scene.removeAllActions(this.circle);
+        HapticFeedback.notification('error');
+    }
 
-        const shrink = Action.scaleTo(0.8, 100);
-        shrink.timingFunction = Action.easeIn;
+    addScore(points) {
+        this.score += points;
+        this.scoreLabel.text = this.score.toString();
 
-        const grow = Action.scaleTo(1.2, 150);
-        grow.timingFunction = Action.easeOut;
-
-        const normalize = Action.scaleTo(1.0, 100);
-
-        // Get new position
-        const newPosition = this.getRandomPosition();
-
-        // Animate to new position
-        const moveAction = Action.moveTo(newPosition, 300);
-        moveAction.timingFunction = Action.easeOut;
-
-        const sequence = Action.sequence([
-            shrink,
-            grow,
-            Action.run(() => {
-                this.scene.run(this.circle, moveAction, 'move');
-            }),
-            normalize,
-            Action.wait(300),
-            Action.run(() => {
-                this.isAnimating = false;
-                this.startIdleAnimation();
-            })
+        // Pop animation
+        const pop = Action.sequence([
+            Action.scaleTo(1.2, 100),
+            Action.scaleTo(1, 150)
         ]);
+        this.scene.run(this.scoreLabel, pop);
+    }
 
-        this.scene.run(this.circle, sequence, 'tap');
+    handleTouch(type, x, y) {
+        if (this.gameOver) {
+            if (type === 'began') {
+                this.restart();
+            }
+            return;
+        }
 
-        // Score pop animation
-        const scoreGrow = Action.scaleTo(1.3, 100);
-        scoreGrow.timingFunction = Action.easeOut;
+        const touchPoint = new Vector2(x, y);
 
-        const scoreShrink = Action.scaleTo(1.0, 200);
-        scoreShrink.timingFunction = Action.easeInOut;
+        if (type === 'began') {
+            // Check if touching a block slot
+            for (const slot of this.blockSlots) {
+                if (slot.placed) continue;
 
-        this.scene.run(this.scoreLabel, Action.sequence([scoreGrow, scoreShrink]), 'scorePop');
+                // Simple hit test
+                const dist = touchPoint.distance(slot.node.position);
+                if (dist < 150) {
+                    this.selectedBlock = slot;
+                    this.dragOffset = slot.node.position.subtract(touchPoint);
 
-        // Flash the circle color
-        const originalColor = this.circle.fillColor;
-        this.circle.fillColor = Color.white;
-        setTimeout(() => {
-            this.circle.fillColor = originalColor;
-        }, 50);
+                    // Scale up when picked up
+                    slot.node.scale = new Vector2(1.2, 1.2);
+                    slot.node.zPosition = 50;
+
+                    HapticFeedback.selection();
+                    break;
+                }
+            }
+        } else if (type === 'moved' && this.selectedBlock) {
+            // Move block with touch
+            this.selectedBlock.node.position = touchPoint.add(this.dragOffset);
+        } else if (type === 'ended' && this.selectedBlock) {
+            // Try to place block
+            const gridPos = this.getGridPosition(
+                this.selectedBlock.node.position.x,
+                this.selectedBlock.node.position.y
+            );
+
+            if (this.canPlaceBlock(this.selectedBlock.shape, gridPos.x, gridPos.y)) {
+                this.placeBlock(this.selectedBlock, gridPos.x, gridPos.y);
+            } else {
+                // Return to original position
+                const moveBack = Action.moveTo(this.selectedBlock.originalPosition, 200);
+                moveBack.timingFunction = Action.easeOut;
+                this.scene.run(this.selectedBlock.node, moveBack);
+
+                this.selectedBlock.node.scale = new Vector2(0.6, 0.6);
+                this.selectedBlock.node.zPosition = 10;
+            }
+
+            this.selectedBlock = null;
+        }
     }
 
     update(deltaTime) {
-        // Update scene actions
         this.scene.update(deltaTime);
-
-        // Update particles
         this.particles.update(deltaTime);
     }
 
@@ -234,16 +565,28 @@ class TapTheCircle {
     }
 
     getObjectCount() {
-        return this.scene.children.length + this.particles.particles.length;
+        return this.scene.children.length + this.placedBlocks.length + this.particles.particles.length;
     }
 
     restart() {
+        // Reset game state
         this.score = 0;
         this.scoreLabel.text = '0';
-        this.circle.position = this.getRandomPosition();
-        this.isAnimating = false;
-        this.scene.removeAllActions(this.circle);
-        this.startIdleAnimation();
+        this.gameOver = false;
+        this.grid = this.createEmptyGrid();
+
+        // Hide game over UI
+        this.gameOverLabel.isHidden = true;
+        this.restartLabel.isHidden = true;
+
+        // Clear placed blocks
+        for (const block of this.placedBlocks) {
+            block.node.removeFromParent();
+        }
+        this.placedBlocks = [];
+
+        // Spawn new blocks
+        this.spawnNewBlocks();
     }
 
     reset() {
@@ -254,5 +597,5 @@ class TapTheCircle {
 }
 
 // Initialize game
-window.gameInstance = new TapTheCircle();
-window.preview.log('Tap the Circle game loaded!', 'info');
+window.gameInstance = new BlockBlast();
+window.preview.log('Block Blast game loaded!', 'info');

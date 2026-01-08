@@ -17,6 +17,51 @@ Run the Visual Ralph Loop to autonomously develop and polish a game through iter
 
 ## Workflow
 
+### Phase 0: Prerequisites Check (MANDATORY)
+
+**BEFORE doing anything else, verify the environment is ready.**
+
+#### Step 1: Install Playwright Browser
+
+```
+Call: mcp__playwright__browser_install
+
+This installs Chromium if not already installed.
+Wait for it to complete before proceeding.
+```
+
+#### Step 2: Test Browser Launch
+
+```
+Call: mcp__playwright__browser_navigate
+Parameters: url = "about:blank"
+
+If this fails: STOP and report the error.
+If this succeeds: Browser is working.
+```
+
+#### Step 3: Verify Preview Files
+
+```
+Check these files exist:
+- preview/index.html
+- preview/game-renderer.js
+- preview/game.js
+
+If missing: STOP and report which files are missing.
+```
+
+#### Step 4: Get Absolute Preview Path
+
+```
+Use pwd or file system to get the absolute path.
+Store it for later: file:///[absolute-path]/preview/index.html
+```
+
+**Only proceed to Phase 1 after ALL prerequisites pass.**
+
+---
+
 ### Phase 1: Initialize Session
 
 1. **Parse Arguments**
@@ -237,3 +282,66 @@ New Patches Created:
 3. **Check patches first** - Known solutions save time
 4. **Trust the loop** - Let it iterate
 5. **Review screenshots** - Visual truth > assumptions
+
+---
+
+## Troubleshooting
+
+### "Browser not installed" or timeout on first run
+
+```
+Fix: The browser_install step should handle this automatically.
+If it fails, run /setup first to diagnose.
+```
+
+### Browser hangs or times out
+
+```
+Fix: Kill any stuck browser processes first:
+  pkill -f chromium
+  pkill -f chrome
+
+Then try again.
+```
+
+### "Cannot navigate to preview"
+
+```
+Fix: Ensure the preview path is a valid file:// URL.
+The path must be absolute: file:///home/user/project/preview/index.html
+NOT: file://preview/index.html
+```
+
+### Screenshot shows blank white page
+
+```
+Possible causes:
+1. game.js has syntax errors - check console messages
+2. Game not initialized - ensure setup() is called
+3. Canvas not rendering - check if canvas element exists
+
+Fix: Use mcp__playwright__browser_console_messages to see errors.
+```
+
+### Loop seems stuck on same issue
+
+```
+Possible causes:
+1. Fix isn't actually being applied
+2. Issue is misdiagnosed
+3. Multiple issues masking each other
+
+Fix: Manually inspect the screenshot and code.
+Consider reducing to 1 issue per iteration.
+```
+
+### "Max iterations reached" without completion
+
+```
+This means quality gates never all passed.
+Check which gates are failing and why.
+Consider:
+- Simplifying the game prompt
+- Running more iterations
+- Manually fixing persistent issues
+```
