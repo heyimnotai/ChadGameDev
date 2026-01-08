@@ -1,5 +1,5 @@
 ---
-description: Run full Ralph Loop optimization cycle - visualize, analyze, fix, repeat
+description: Run full Chad Loop optimization cycle - visualize, analyze, fix, repeat
 allowed-tools:
   - Read
   - Write
@@ -17,7 +17,7 @@ allowed-tools:
 
 # Optimize Command
 
-Run the full Ralph Loop optimization cycle to iteratively improve game visuals and gameplay.
+Run the full Chad Loop optimization cycle to iteratively improve game visuals and gameplay.
 
 ## Usage
 
@@ -30,7 +30,7 @@ Run the full Ralph Loop optimization cycle to iteratively improve game visuals a
 - `--iterations`: Maximum optimization iterations (default: 5)
 - `--focus`: Specific area to focus on (layout, performance, visuals, gameplay)
 
-## The Ralph Loop Cycle
+## The Chad Loop Cycle
 
 ```
 ┌────────────────────────────────────────────────────┐
@@ -157,7 +157,7 @@ If gates fail → Return to Step 2 with remaining issues
 ## Output Format
 
 ```markdown
-## Ralph Loop Optimization Report
+## Chad Loop Optimization Report
 
 ### Session Summary
 - **Iterations**: 3

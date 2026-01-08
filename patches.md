@@ -1,12 +1,12 @@
-# Ralph Patches - Game Development Knowledge Base
+# Chad Patches - Game Development Knowledge Base
 
-> **Purpose**: When Ralph encounters a problem and solves it, the problem-solution pair is recorded here. Future iterations consult this file FIRST, using proven solutions instead of guessing. This file grows smarter over time.
+> **Purpose**: When Chad encounters a problem and solves it, the problem-solution pair is recorded here. Future iterations consult this file FIRST, using proven solutions instead of guessing. This file grows smarter over time.
 
 ---
 
 ## How To Use This File
 
-### During Ralph Loop
+### During Chad Loop
 1. **Before fixing**: Search this file for matching problem patterns
 2. **If match found**: Apply the documented solution
 3. **If no match**: Debug, solve, then document the new patch
@@ -361,7 +361,7 @@ function playSound(name) {
 
 ## Adding New Patches
 
-When Ralph solves a new problem:
+When Chad solves a new problem:
 
 1. **Find next PATCH number**: Look at last entry, increment
 2. **Document the pattern**: What did the issue look like in screenshots?

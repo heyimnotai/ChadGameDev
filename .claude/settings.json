@@ -41,7 +41,7 @@
     "hooks": true
   },
   "project": {
-    "name": "Ralph Loop iOS Game Development",
+    "name": "Chad Loop iOS Game Development",
     "type": "ios-game",
     "previewPath": "preview/index.html"
   }

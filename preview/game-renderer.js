@@ -1,5 +1,5 @@
 /**
- * Ralph Loop Game Renderer
+ * Chad Loop Game Renderer
  *
  * Provides SpriteKit/SwiftUI-like abstractions for HTML5 Canvas
  * Used for rapid iOS game preview before native compilation

@@ -1,10 +1,10 @@
-# Visual Ralph Loop - Autonomous Game Development
+# Visual Chad Loop - Autonomous Game Development
 
-An AI-powered game development framework that uses visual feedback loops to autonomously build and polish iOS games. Based on the Ralph Loop methodology, extended with multimodal screenshot analysis and self-prompting capabilities.
+An AI-powered game development framework that uses visual feedback loops to autonomously build and polish iOS games. Based on the Chad Loop methodology, extended with multimodal screenshot analysis and self-prompting capabilities.
 
 ## What is This?
 
-Traditional [Ralph](https://github.com/frankbria/ralph-claude-code) uses typecheck/tests as feedback signals. **Visual Ralph** uses screenshot analysis - Claude looks at the game, identifies issues, writes its own fix instructions, and iterates until quality gates pass.
+Traditional [Chad](https://github.com/frankbria/chad-claude-code) uses typecheck/tests as feedback signals. **Visual Chad** uses screenshot analysis - Claude looks at the game, identifies issues, writes its own fix instructions, and iterates until quality gates pass.
 
 ```
 User Prompt → Generate Code → Preview → Screenshot → Analyze → Self-Prompt → Fix → Repeat
@@ -26,8 +26,8 @@ User Prompt → Generate Code → Preview → Screenshot → Analyze → Self-Pr
 ### Step 1: Clone and Install Dependencies
 
 ```bash
-git clone https://github.com/heyimnotai/VisualRalphLoop.git
-cd VisualRalphLoop
+git clone https://github.com/heyimnotai/VisualChadLoop.git
+cd VisualChadLoop
 npm install
 npx playwright install chromium
 ```
@@ -69,7 +69,7 @@ claude --dangerously-skip-permissions
 
 Then run:
 ```
-/ralph
+/chad
 ```
 
 ---
@@ -77,8 +77,8 @@ Then run:
 ## Quick Start
 
 ```bash
-# Run the Ralph loop (interactive mode)
-/ralph
+# Run the Chad loop (interactive mode)
+/chad
 
 # Or use the commands separately
 /preview    # Generate and open HTML5 preview
@@ -106,7 +106,7 @@ GameSkillsFrameWork/
 ├── SYSTEM_BREAKDOWN.md          # Architecture details
 ├── patches.md                   # Problem→Solution knowledge base
 │
-├── ralph/                       # Loop infrastructure
+├── chad/                       # Loop infrastructure
 │   ├── config.json             # Settings
 │   ├── session-state.json      # Current session
 │   ├── current-prompt.md       # Self-generated prompt
@@ -114,16 +114,16 @@ GameSkillsFrameWork/
 │
 ├── .claude/
 │   ├── commands/               # 6 slash commands
-│   │   ├── ralph.md           # /ralph - Main loop
+│   │   ├── chad.md           # /chad - Main loop
 │   │   ├── preview.md         # /preview - HTML5 preview
 │   │   ├── optimize.md        # /optimize - Optimization cycle
 │   │   ├── build.md           # /build - iOS build
 │   │   ├── test-ios.md        # /test-ios - Simulator test
 │   │   └── push.md            # /push - Git commit
-│   └── skills/                 # 4 Ralph skills
+│   └── skills/                 # 4 Chad skills
 │       ├── game-preview/
 │       ├── visual-testing/
-│       ├── ralph-optimizer/
+│       ├── chad-optimizer/
 │       └── self-prompter/
 │
 ├── ios-game-skills/            # 30 game development skills
@@ -139,12 +139,12 @@ GameSkillsFrameWork/
 │   ├── game-renderer.js       # SpriteKit-like abstractions
 │   └── game.js                # Current game code
 │
-└── screenshots/               # Captured during Ralph loops
+└── screenshots/               # Captured during Chad loops
 ```
 
 ## The Patch System
 
-When Ralph encounters a problem and solves it, the solution is documented:
+When Chad encounters a problem and solves it, the solution is documented:
 
 ```markdown
 ## PATCH-002: Particles Not Visible
@@ -238,9 +238,9 @@ Make sure `.mcp.json` has `PLAYWRIGHT_HEADLESS` set to `true`. The system uses h
 
 ## Inspiration
 
-- [Ralph Wiggum Technique](https://dev.to/sivarampg/the-ralph-wiggum-approach-running-ai-coding-agents-for-hours-not-minutes-57c1) by Geoffrey Huntley
-- [Ryan Carson's Ralph Guide](https://x.com/ryancarson) - Step-by-step breakdown
-- [ralph-claude-code](https://github.com/frankbria/ralph-claude-code) - Original implementation
+- [Chad Wiggum Technique](https://dev.to/sivarampg/the-chad-wiggum-approach-running-ai-coding-agents-for-hours-not-minutes-57c1) by Geoffrey Huntley
+- [Ryan Carson's Chad Guide](https://x.com/ryancarson) - Step-by-step breakdown
+- [chad-claude-code](https://github.com/frankbria/chad-claude-code) - Original implementation
 
 ## License
 

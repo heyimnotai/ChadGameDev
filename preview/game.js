@@ -28,10 +28,12 @@ class BlockBlast {
 
         // Game state
         this.score = 0;
-        this.highScore = 0;
+        this.highScore = this.loadHighScore();
         this.gameOver = false;
         this.grid = this.createEmptyGrid();
         this.comboCount = 0; // Track consecutive line clears
+        this.linesCleared = 0; // Track total lines cleared
+        this.gamesPlayed = 0; // Track games played this session
 
         // Block colors
         this.colors = [
@@ -81,6 +83,9 @@ class BlockBlast {
         this.shadowNode = null;
         this.ghostCells = [];
 
+        // Score preview label (shows potential score when dragging)
+        this.scorePreviewLabel = null;
+
         // Screen shake state
         this.shakeOffset = new Vector2(0, 0);
         this.shakeIntensity = 0;
@@ -111,6 +116,10 @@ class BlockBlast {
         this.scene = new Scene({ width: this.width, height: this.height });
         this.scene.backgroundColor = new Color(0.08, 0.08, 0.12);
 
+        // First launch state (for onboarding hint)
+        this.showHint = true;
+        this.hintLabel = null;
+
         // Particle emitter
         this.particles = new ParticleEmitter();
         this.particles.particleColor = Color.yellow;
@@ -133,12 +142,91 @@ class BlockBlast {
         return grid;
     }
 
+    /**
+     * Load high score from localStorage for persistence
+     */
+    loadHighScore() {
+        try {
+            const saved = localStorage.getItem('blockblast_highscore');
+            return saved ? parseInt(saved, 10) : 0;
+        } catch (e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Save high score to localStorage
+     */
+    saveHighScore() {
+        try {
+            localStorage.setItem('blockblast_highscore', this.highScore.toString());
+        } catch (e) {
+            // Silently fail if localStorage unavailable
+        }
+    }
+
     setupGame() {
         this.createBackground();
         this.createUI();
         this.createGrid();
         this.spawnNewBlocks();
         this.scene.addChild(this.particles);
+        this.playWelcomeAnimation();
+    }
+
+    /**
+     * Welcome animation - dramatic entrance for title and grid
+     */
+    playWelcomeAnimation() {
+        // Title drops in from above
+        const originalTitleY = this.titleLabel.position.y;
+        this.titleLabel.position = new Vector2(this.width / 2, -100);
+        this.titleLabel.alpha = 0;
+
+        setTimeout(() => {
+            const titleMove = Action.moveTo(new Vector2(this.width / 2, originalTitleY), 400);
+            titleMove.timingFunction = Action.easeOut;
+            const titleFade = Action.fadeIn(300);
+            this.scene.run(this.titleLabel, titleMove);
+            this.scene.run(this.titleLabel, titleFade);
+        }, 100);
+
+        // Score fades in after title
+        this.scoreLabel.alpha = 0;
+        setTimeout(() => {
+            const scoreFade = Action.fadeIn(300);
+            this.scene.run(this.scoreLabel, scoreFade);
+        }, 400);
+
+        // Grid background fades/scales in
+        const gridBg = this.scene.children.find(c => c.cornerRadius === 24 && c.color);
+        if (gridBg) {
+            gridBg.alpha = 0;
+            gridBg.scale = new Vector2(0.9, 0.9);
+            setTimeout(() => {
+                const gridFade = Action.fadeIn(400);
+                const gridScale = Action.scaleTo(1, 400);
+                gridScale.timingFunction = Action.easeOut;
+                this.scene.run(gridBg, gridFade);
+                this.scene.run(gridBg, gridScale);
+            }, 300);
+        }
+
+        // Hint pulses gently to draw attention
+        if (this.hintLabel) {
+            this.hintLabel.alpha = 0;
+            setTimeout(() => {
+                const hintFade = Action.fadeIn(500);
+                this.scene.run(this.hintLabel, hintFade);
+            }, 800);
+        }
+        if (this.hintArrow) {
+            this.hintArrow.alpha = 0;
+            setTimeout(() => {
+                const arrowFade = Action.fadeIn(500);
+                this.scene.run(this.hintArrow, arrowFade);
+            }, 1000);
+        }
     }
 
     createBackground() {
@@ -174,12 +262,26 @@ class BlockBlast {
         this.scoreLabel.position = new Vector2(this.width / 2, this.safeTop + 170);
         this.scene.addChild(this.scoreLabel);
 
-        // High score
-        this.highScoreLabel = new LabelNode('BEST: 0');
+        // High score (shows persisted value)
+        this.highScoreLabel = new LabelNode(`BEST: ${this.highScore}`);
         this.highScoreLabel.fontSize = 36;
         this.highScoreLabel.fontColor = Color.gray;
         this.highScoreLabel.position = new Vector2(this.width / 2, this.safeTop + 240);
         this.scene.addChild(this.highScoreLabel);
+
+        // Lines cleared counter
+        this.linesClearedLabel = new LabelNode('LINES: 0');
+        this.linesClearedLabel.fontSize = 32;
+        this.linesClearedLabel.fontColor = new Color(0.5, 0.7, 1); // Light blue
+        this.linesClearedLabel.position = new Vector2(this.width - 120, this.safeTop + 60);
+        this.scene.addChild(this.linesClearedLabel);
+
+        // Games played counter (session streak)
+        this.gamesPlayedLabel = new LabelNode('GAME #1');
+        this.gamesPlayedLabel.fontSize = 28;
+        this.gamesPlayedLabel.fontColor = new Color(0.6, 0.6, 0.65);
+        this.gamesPlayedLabel.position = new Vector2(120, this.safeTop + 60);
+        this.scene.addChild(this.gamesPlayedLabel);
 
         // Combo label (hidden initially)
         this.comboLabel = new LabelNode('');
@@ -235,9 +337,58 @@ class BlockBlast {
         this.titleGlow.position = new Vector2(this.width / 2, this.safeTop + 60);
         this.titleGlow.zPosition = -1;
         this.scene.addChild(this.titleGlow);
+
+        // Onboarding hint label
+        this.hintLabel = new LabelNode('DRAG BLOCKS TO GRID');
+        this.hintLabel.fontSize = 36;
+        this.hintLabel.fontColor = Color.white.withOpacity(0.6);
+        this.hintLabel.position = new Vector2(this.width / 2, this.gridY + this.gridHeight / 2);
+        this.hintLabel.zPosition = 50;
+        this.scene.addChild(this.hintLabel);
+
+        // Hint arrow pointing down (unicode arrow) - will pulse
+        this.hintArrow = new LabelNode('▼');
+        this.hintArrow.fontSize = 48;
+        this.hintArrow.fontColor = Color.white.withOpacity(0.4);
+        this.hintArrow.position = new Vector2(this.width / 2, this.gridY + this.gridHeight + 80);
+        this.hintArrow.zPosition = 50;
+        this.scene.addChild(this.hintArrow);
+
+        // Animate arrow bouncing
+        this.animateHintArrow();
+    }
+
+    /**
+     * Animate hint arrow bouncing to draw attention
+     */
+    animateHintArrow() {
+        if (!this.hintArrow || this.hintArrow.isHidden) return;
+
+        const bounce = Action.sequence([
+            Action.moveBy(new Vector2(0, 10), 400),
+            Action.moveBy(new Vector2(0, -10), 400)
+        ]);
+
+        this.scene.run(this.hintArrow, bounce);
+
+        // Loop the animation
+        setTimeout(() => this.animateHintArrow(), 800);
     }
 
     createGrid() {
+        // Ambient grid border glow (always visible, subtle blue)
+        this.gridAmbientGlow = new SpriteNode(new Color(0.3, 0.5, 0.9).withOpacity(0.15), {
+            width: this.gridWidth + this.gridPadding * 2 + 40,
+            height: this.gridHeight + this.gridPadding * 2 + 40
+        });
+        this.gridAmbientGlow.cornerRadius = 36;
+        this.gridAmbientGlow.position = new Vector2(
+            this.gridX + this.gridWidth / 2,
+            this.gridY + this.gridHeight / 2
+        );
+        this.gridAmbientGlow.zPosition = -2;
+        this.scene.addChild(this.gridAmbientGlow);
+
         // Grid glow (for combo feedback) - positioned behind the grid background
         this.gridGlow = new SpriteNode(Color.yellow.withOpacity(0), {
             width: this.gridWidth + this.gridPadding * 2 + 20,
@@ -286,6 +437,17 @@ class BlockBlast {
 
         // Placed blocks container (will hold colored blocks)
         this.placedBlocks = [];
+
+        // Block slot tray background (below grid)
+        const slotTrayY = this.gridY + this.gridHeight + 180;
+        const slotTray = new SpriteNode(new Color(0.08, 0.08, 0.12), {
+            width: this.width - 60,
+            height: 200
+        });
+        slotTray.cornerRadius = 20;
+        slotTray.position = new Vector2(this.width / 2, slotTrayY);
+        slotTray.zPosition = 0;
+        this.scene.addChild(slotTray);
     }
 
     spawnNewBlocks() {
@@ -430,7 +592,7 @@ class BlockBlast {
     }
 
     updateGhostPreview(slot, gridX, gridY) {
-        // Clear existing ghost cells
+        // Clear existing ghost cells and score preview
         this.clearGhostCells();
 
         // Only show ghost if placement is valid
@@ -441,6 +603,7 @@ class BlockBlast {
         // Create ghost cells at ~30% opacity
         const ghostColor = slot.color.withOpacity(0.3);
 
+        let centerX = 0, centerY = 0;
         for (const [dx, dy] of slot.shape) {
             const x = gridX + dx;
             const y = gridY + dy;
@@ -457,7 +620,23 @@ class BlockBlast {
             ghostCell.zPosition = 4; // Between grid cells (1) and placed blocks (5)
             this.scene.addChild(ghostCell);
             this.ghostCells.push(ghostCell);
+
+            centerX += ghostCell.position.x;
+            centerY += ghostCell.position.y;
         }
+
+        // Calculate and show score preview
+        const baseScore = slot.shape.length * 10;
+        centerX /= slot.shape.length;
+        centerY /= slot.shape.length;
+
+        // Create score preview label
+        this.scorePreviewLabel = new LabelNode(`+${baseScore}`);
+        this.scorePreviewLabel.fontSize = 36;
+        this.scorePreviewLabel.fontColor = Color.white.withOpacity(0.7);
+        this.scorePreviewLabel.position = new Vector2(centerX, centerY - 60);
+        this.scorePreviewLabel.zPosition = 60;
+        this.scene.addChild(this.scorePreviewLabel);
     }
 
     clearGhostCells() {
@@ -465,6 +644,12 @@ class BlockBlast {
             ghost.removeFromParent();
         }
         this.ghostCells = [];
+
+        // Also clear score preview label
+        if (this.scorePreviewLabel) {
+            this.scorePreviewLabel.removeFromParent();
+            this.scorePreviewLabel = null;
+        }
     }
 
     canPlaceBlock(shape, gridX, gridY) {
@@ -486,12 +671,31 @@ class BlockBlast {
     placeBlock(slot, gridX, gridY) {
         const { shape, color } = slot;
 
-        // Place each cell
+        // Place each cell with flash effect
         for (const [dx, dy] of shape) {
             const x = gridX + dx;
             const y = gridY + dy;
 
             this.grid[y][x] = color;
+
+            // Create flash overlay that fades out
+            const flash = new SpriteNode(Color.white, {
+                width: this.cellSize - 4,
+                height: this.cellSize - 4
+            });
+            flash.cornerRadius = 12;
+            flash.position = new Vector2(
+                this.gridX + x * this.cellSize + this.cellSize / 2,
+                this.gridY + y * this.cellSize + this.cellSize / 2
+            );
+            flash.zPosition = 6;
+            flash.alpha = 0.8;
+            this.scene.addChild(flash);
+
+            // Fade out flash
+            const flashFade = Action.fadeOut(200);
+            this.scene.run(flash, flashFade);
+            setTimeout(() => flash.removeFromParent(), 250);
 
             // Create visual block
             const cell = new SpriteNode(color, {
@@ -508,14 +712,32 @@ class BlockBlast {
             this.scene.addChild(cell);
             this.placedBlocks.push({ node: cell, x, y });
 
-            // Fade in animation
+            // Fade in animation with scale pop
+            cell.scale = new Vector2(0.8, 0.8);
             const fadeIn = Action.fadeIn(150);
+            const scaleUp = Action.scaleTo(1, 150);
             this.scene.run(cell, fadeIn);
+            this.scene.run(cell, scaleUp);
         }
 
         // Remove the slot
         slot.node.removeFromParent();
         slot.placed = true;
+
+        // Hide onboarding hint on first block placement
+        if (this.showHint) {
+            this.showHint = false;
+            if (this.hintLabel) {
+                const fadeOut = Action.fadeOut(300);
+                this.scene.run(this.hintLabel, fadeOut);
+                setTimeout(() => this.hintLabel.isHidden = true, 300);
+            }
+            if (this.hintArrow) {
+                const fadeOut = Action.fadeOut(300);
+                this.scene.run(this.hintArrow, fadeOut);
+                setTimeout(() => this.hintArrow.isHidden = true, 300);
+            }
+        }
 
         // Add score for placing
         this.addScore(shape.length * 10);
@@ -591,6 +813,56 @@ class BlockBlast {
         if (cellsToClear.size > 0) {
             // Score based on lines cleared with combo multiplier
             const linesCleared = rowsToClear.length + colsToClear.length;
+            this.linesCleared += linesCleared;
+            this.linesClearedLabel.text = `LINES: ${this.linesCleared}`;
+
+            // Pulse animation on lines counter
+            const linesPop = Action.sequence([
+                Action.scaleTo(1.3, 100),
+                Action.scaleTo(1, 150)
+            ]);
+            this.scene.run(this.linesClearedLabel, linesPop);
+
+            // Show celebratory text based on lines cleared
+            let clearText = '';
+            let clearColor = Color.white;
+            if (linesCleared >= 4) {
+                clearText = 'QUAD CLEAR!';
+                clearColor = new Color(1, 0.3, 0.8); // Pink
+            } else if (linesCleared === 3) {
+                clearText = 'TRIPLE!';
+                clearColor = new Color(1, 0.5, 0); // Orange
+            } else if (linesCleared === 2) {
+                clearText = 'DOUBLE!';
+                clearColor = Color.yellow;
+            }
+
+            if (clearText) {
+                const clearLabel = new LabelNode(clearText);
+                clearLabel.fontSize = 64;
+                clearLabel.fontColor = clearColor;
+                clearLabel.position = new Vector2(this.width / 2, this.gridY + this.gridHeight / 2);
+                clearLabel.zPosition = 85;
+                clearLabel.scale = new Vector2(0.5, 0.5);
+                clearLabel.alpha = 0;
+                this.scene.addChild(clearLabel);
+
+                // Pop in, hold, fade out
+                const popIn = Action.scaleTo(1.2, 150);
+                popIn.timingFunction = Action.easeOut;
+                const fadeIn = Action.fadeIn(100);
+                this.scene.run(clearLabel, popIn);
+                this.scene.run(clearLabel, fadeIn);
+
+                setTimeout(() => {
+                    const fadeOut = Action.fadeOut(400);
+                    const moveUp = Action.moveBy(new Vector2(0, -80), 400);
+                    this.scene.run(clearLabel, fadeOut);
+                    this.scene.run(clearLabel, moveUp);
+                }, 400);
+
+                setTimeout(() => clearLabel.removeFromParent(), 900);
+            }
             const bonus = linesCleared > 1 ? linesCleared * 50 : 0;
             const baseScore = cellsToClear.size * 20 + bonus;
             // Combo multiplier: comboCount will be incremented after this, so next combo is comboCount + 1
@@ -669,9 +941,64 @@ class BlockBlast {
             }
 
             HapticFeedback.notification('success');
+
+            // Check for Perfect Clear (all blocks cleared from grid)
+            const isGridEmpty = this.grid.every(row => row.every(cell => cell === null));
+            if (isGridEmpty) {
+                this.triggerPerfectClear();
+            }
+
             return true; // Lines were cleared
         }
         return false; // No lines cleared
+    }
+
+    /**
+     * Trigger Perfect Clear celebration when the entire grid is emptied
+     */
+    triggerPerfectClear() {
+        // Big bonus points
+        const perfectBonus = 500;
+        this.addScore(perfectBonus);
+
+        // Special celebration label
+        const perfectLabel = new LabelNode('PERFECT CLEAR!');
+        perfectLabel.fontSize = 84;
+        perfectLabel.fontColor = new Color(0.2, 1, 0.6); // Bright green
+        perfectLabel.position = new Vector2(this.width / 2, this.height / 2);
+        perfectLabel.zPosition = 100;
+        perfectLabel.scale = new Vector2(0.3, 0.3);
+        this.scene.addChild(perfectLabel);
+
+        // Pop in, hold, then fade out
+        const popIn = Action.scaleTo(1.2, 200);
+        popIn.timingFunction = Action.easeOut;
+        const settle = Action.scaleTo(1, 100);
+        const hold = Action.wait(800);
+        const fadeOut = Action.fadeOut(400);
+        const anim = Action.sequence([popIn, settle, hold, fadeOut]);
+        this.scene.run(perfectLabel, anim);
+
+        // Remove after animation
+        setTimeout(() => perfectLabel.removeFromParent(), 1600);
+
+        // Screen-wide particle explosion
+        const colors = [Color.cyan, Color.green, Color.yellow, new Color(0.2, 1, 0.6)];
+        for (let i = 0; i < 40; i++) {
+            this.particles.position = new Vector2(
+                this.gridX + Math.random() * this.gridWidth,
+                this.gridY + Math.random() * this.gridHeight
+            );
+            this.particles.particleColor = colors[Math.floor(Math.random() * colors.length)];
+            this.particles.particleSize = 16 + Math.random() * 12;
+            this.particles.burst(1);
+        }
+        this.particles.particleSize = 18; // Reset
+
+        // Extra strong screen shake
+        this.screenShake(15, 400);
+
+        HapticFeedback.notification('success');
     }
 
     checkGameOver() {
@@ -701,6 +1028,25 @@ class BlockBlast {
         if (this.score > this.highScore) {
             this.highScore = this.score;
             this.highScoreLabel.text = `BEST: ${this.highScore}`;
+            this.saveHighScore(); // Persist to localStorage
+
+            // "NEW BEST!" celebration
+            const newBestLabel = new LabelNode('NEW BEST!');
+            newBestLabel.fontSize = 42;
+            newBestLabel.fontColor = new Color(1, 0.85, 0.2);
+            newBestLabel.position = new Vector2(this.width / 2, this.safeTop + 280);
+            newBestLabel.zPosition = 100;
+            newBestLabel.alpha = 0;
+            this.scene.addChild(newBestLabel);
+
+            // Fade in, hold, fade out
+            const anim = Action.sequence([
+                Action.fadeIn(200),
+                Action.wait(1500),
+                Action.fadeOut(500)
+            ]);
+            this.scene.run(newBestLabel, anim);
+            setTimeout(() => newBestLabel.removeFromParent(), 2500);
         }
 
         // Explode all placed blocks outward
@@ -747,6 +1093,24 @@ class BlockBlast {
             const scaleUp = Action.scaleTo(1, 300);
             scaleUp.timingFunction = Action.easeOut;
             this.scene.run(this.gameOverLabel, scaleUp);
+
+            // Show final stats summary
+            const statsLabel = new LabelNode(`SCORE: ${this.score}  •  LINES: ${this.linesCleared}`);
+            statsLabel.fontSize = 32;
+            statsLabel.fontColor = Color.white.withOpacity(0.7);
+            statsLabel.position = new Vector2(this.width / 2, this.height / 2 + 180);
+            statsLabel.zPosition = 100;
+            statsLabel.alpha = 0;
+            this.scene.addChild(statsLabel);
+
+            // Fade in stats
+            setTimeout(() => {
+                const fadeIn = Action.fadeIn(300);
+                this.scene.run(statsLabel, fadeIn);
+            }, 200);
+
+            // Store reference for cleanup
+            this.statsLabel = statsLabel;
         }, 300);
 
         // Screen shake for impact
@@ -1016,9 +1380,21 @@ class BlockBlast {
                     this.selectedBlock = slot;
                     this.dragOffset = slot.node.position.subtract(touchPoint);
 
-                    // Scale up when picked up
-                    slot.node.scale = new Vector2(1.2, 1.2);
+                    // Animated pickup: bounce scale effect
                     slot.node.zPosition = 50;
+                    const pickupBounce = Action.sequence([
+                        Action.scaleTo(1.35, 80),
+                        Action.scaleTo(1.2, 120)
+                    ]);
+                    pickupBounce.timingFunction = Action.easeOut;
+                    this.scene.run(slot.node, pickupBounce);
+
+                    // Small particles burst on pickup
+                    this.particles.position = slot.node.position;
+                    this.particles.particleColor = slot.color.withOpacity(0.6);
+                    this.particles.particleSize = 12;
+                    this.particles.burst(5);
+                    this.particles.particleSize = 18; // Reset
 
                     // Create and add drop shadow
                     this.shadowNode = this.createShadow(slot);
@@ -1064,13 +1440,45 @@ class BlockBlast {
             if (this.canPlaceBlock(this.selectedBlock.shape, gridPos.x, gridPos.y)) {
                 this.placeBlock(this.selectedBlock, gridPos.x, gridPos.y);
             } else {
-                // Return to original position
-                const moveBack = Action.moveTo(this.selectedBlock.originalPosition, 200);
-                moveBack.timingFunction = Action.easeOut;
-                this.scene.run(this.selectedBlock.node, moveBack);
+                // Invalid placement - shake and return with juice
+                const block = this.selectedBlock.node;
+                const original = this.selectedBlock.originalPosition;
 
-                this.selectedBlock.node.scale = new Vector2(0.6, 0.6);
+                // Quick horizontal shake sequence
+                const shakeAmount = 20;
+                const shakeDuration = 50;
+                const shake1 = Action.moveBy(new Vector2(-shakeAmount, 0), shakeDuration);
+                const shake2 = Action.moveBy(new Vector2(shakeAmount * 2, 0), shakeDuration);
+                const shake3 = Action.moveBy(new Vector2(-shakeAmount * 2, 0), shakeDuration);
+                const shake4 = Action.moveBy(new Vector2(shakeAmount, 0), shakeDuration);
+
+                // Chain shake then move back
+                this.scene.run(block, shake1);
+                setTimeout(() => this.scene.run(block, shake2), shakeDuration);
+                setTimeout(() => this.scene.run(block, shake3), shakeDuration * 2);
+                setTimeout(() => {
+                    this.scene.run(block, shake4);
+                    // After shake, smoothly return to original position
+                    setTimeout(() => {
+                        const moveBack = Action.moveTo(original, 250);
+                        moveBack.timingFunction = Action.easeOut;
+                        this.scene.run(block, moveBack);
+                    }, shakeDuration);
+                }, shakeDuration * 3);
+
+                // Flash red briefly
+                block.alpha = 0.7;
+                setTimeout(() => block.alpha = 1, 200);
+
+                // Scale down
+                const scaleDown = Action.scaleTo(0.6, 250);
+                scaleDown.timingFunction = Action.easeOut;
+                setTimeout(() => this.scene.run(block, scaleDown), shakeDuration * 4);
+
                 this.selectedBlock.node.zPosition = 10;
+
+                // Haptic feedback for invalid
+                HapticFeedback.notification('warning');
             }
 
             this.selectedBlock = null;
@@ -1084,27 +1492,103 @@ class BlockBlast {
         this.updateFloatingLabels(deltaTime);
         this.updateAmbientGridAnimation(deltaTime);
         this.updateTitleShimmer(deltaTime);
+        this.updateBlockSlotIdle(deltaTime);
+    }
+
+    /**
+     * Subtle idle animation for blocks in the tray
+     * Gentle floating bob effect
+     */
+    updateBlockSlotIdle(deltaTime) {
+        for (let i = 0; i < this.blockSlots.length; i++) {
+            const slot = this.blockSlots[i];
+            if (slot.placed || slot === this.selectedBlock) continue;
+
+            // Each block has a different phase offset
+            const phase = this.ambientTime * 0.003 + i * (Math.PI * 2 / 3);
+            const bobAmount = 4; // 4px bob up/down
+
+            // Gentle vertical bob
+            const bobY = Math.sin(phase) * bobAmount;
+
+            // Apply to position (relative to original)
+            if (slot.originalPosition) {
+                slot.node.position = new Vector2(
+                    slot.originalPosition.x,
+                    slot.originalPosition.y + bobY
+                );
+            }
+        }
     }
 
     /**
      * Subtle ambient pulse animation across grid cells
      * Creates a gentle wave effect with staggered timing
+     * Also highlights near-complete lines (7/8 filled)
      */
     updateAmbientGridAnimation(deltaTime) {
         this.ambientTime += deltaTime;
         const cycleTime = 2500; // 2.5 second full cycle
         const waveSpeed = 0.003; // Wave propagation speed
 
+        // Pulse the ambient grid glow (subtle breathing effect)
+        if (this.gridAmbientGlow) {
+            const glowPulse = 0.12 + 0.05 * Math.sin(this.ambientTime * 0.002);
+            this.gridAmbientGlow.color = new Color(0.3, 0.5, 0.9).withOpacity(glowPulse);
+        }
+
+        // Find near-complete rows and columns (6/8 or 7/8 filled)
+        const nearCompleteRows = new Set();
+        const nearCompleteCols = new Set();
+        const almostCompleteRows = new Set(); // 6/8 - lighter hint
+        const almostCompleteCols = new Set();
+
+        for (let y = 0; y < this.gridSize; y++) {
+            let filledCount = 0;
+            for (let x = 0; x < this.gridSize; x++) {
+                if (this.grid[y][x] !== null) filledCount++;
+            }
+            if (filledCount === 7) nearCompleteRows.add(y);
+            else if (filledCount === 6) almostCompleteRows.add(y);
+        }
+
+        for (let x = 0; x < this.gridSize; x++) {
+            let filledCount = 0;
+            for (let y = 0; y < this.gridSize; y++) {
+                if (this.grid[y][x] !== null) filledCount++;
+            }
+            if (filledCount === 7) nearCompleteCols.add(x);
+            else if (filledCount === 6) almostCompleteCols.add(x);
+        }
+
+        // Pulse highlight speed for near-complete
+        const nearPulse = 0.5 + 0.5 * Math.sin(this.ambientTime * 0.008);
+        const almostPulse = 0.5 + 0.5 * Math.sin(this.ambientTime * 0.005); // Slower pulse
+
         for (let y = 0; y < this.gridSize; y++) {
             for (let x = 0; x < this.gridSize; x++) {
                 const cell = this.gridCells[y][x];
                 // Only animate empty cells (not occupied)
                 if (this.grid[y][x] === null) {
-                    // Stagger phase based on position (diagonal wave)
-                    const phase = (x + y) * waveSpeed * 1000;
-                    // Sine wave oscillating between 0.85 and 1.0 opacity
-                    const pulse = 0.925 + 0.075 * Math.sin((this.ambientTime + phase) * (2 * Math.PI / cycleTime));
-                    cell.alpha = pulse;
+                    // Check if this empty cell is in a near-complete row or column
+                    const isNearComplete = nearCompleteRows.has(y) || nearCompleteCols.has(x);
+                    const isAlmostComplete = almostCompleteRows.has(y) || almostCompleteCols.has(x);
+
+                    if (isNearComplete) {
+                        // Brighter pulsing highlight for near-complete cells (7/8) - green tint
+                        cell.color = new Color(0.25 + 0.1 * nearPulse, 0.35 + 0.1 * nearPulse, 0.2 + 0.1 * nearPulse);
+                        cell.alpha = 1;
+                    } else if (isAlmostComplete) {
+                        // Subtle hint for almost-complete cells (6/8) - blue tint
+                        cell.color = new Color(0.18 + 0.04 * almostPulse, 0.2 + 0.04 * almostPulse, 0.28 + 0.04 * almostPulse);
+                        cell.alpha = 1;
+                    } else {
+                        // Normal ambient animation
+                        cell.color = new Color(0.15, 0.15, 0.22);
+                        const phase = (x + y) * waveSpeed * 1000;
+                        const pulse = 0.925 + 0.075 * Math.sin((this.ambientTime + phase) * (2 * Math.PI / cycleTime));
+                        cell.alpha = pulse;
+                    }
                 } else {
                     cell.alpha = 1; // Full opacity for occupied cells
                 }
@@ -1142,17 +1626,44 @@ class BlockBlast {
     }
 
     restart() {
+        // Increment games played
+        this.gamesPlayed++;
+        this.gamesPlayedLabel.text = `GAME #${this.gamesPlayed}`;
+
+        // Pop animation on game counter
+        const gamesPop = Action.sequence([
+            Action.scaleTo(1.3, 100),
+            Action.scaleTo(1, 150)
+        ]);
+        this.scene.run(this.gamesPlayedLabel, gamesPop);
+
         // Reset game state
         this.score = 0;
         this.scoreLabel.text = '0';
         this.gameOver = false;
         this.grid = this.createEmptyGrid();
         this.comboCount = 0;
+        this.linesCleared = 0;
+        this.linesClearedLabel.text = 'LINES: 0';
         this.lastMilestoneIndex = -1; // Reset milestone tracking
 
-        // Hide game over UI
-        this.gameOverLabel.isHidden = true;
-        this.restartLabel.isHidden = true;
+        // Fade out game over UI smoothly
+        const fadeOutGameOver = Action.fadeOut(200);
+        this.scene.run(this.gameOverLabel, fadeOutGameOver);
+        this.scene.run(this.restartLabel, fadeOutGameOver);
+        if (this.statsLabel) {
+            this.scene.run(this.statsLabel, fadeOutGameOver);
+            setTimeout(() => {
+                this.statsLabel.removeFromParent();
+                this.statsLabel = null;
+            }, 200);
+        }
+        setTimeout(() => {
+            this.gameOverLabel.isHidden = true;
+            this.restartLabel.isHidden = true;
+            this.gameOverLabel.alpha = 1;
+            this.restartLabel.alpha = 1;
+        }, 200);
 
         // Hide combo UI
         this.comboLabel.isHidden = true;
@@ -1161,14 +1672,43 @@ class BlockBlast {
         // Hide milestone UI
         this.milestoneLabel.isHidden = true;
 
-        // Clear placed blocks
+        // Clear placed blocks with fade animation
         for (const block of this.placedBlocks) {
-            block.node.removeFromParent();
+            const fade = Action.fadeOut(150);
+            this.scene.run(block.node, fade);
+            setTimeout(() => block.node.removeFromParent(), 150);
         }
         this.placedBlocks = [];
 
+        // Show motivational message if they have a high score to beat
+        if (this.highScore > 0) {
+            const motivationLabel = new LabelNode(`BEAT ${this.highScore}!`);
+            motivationLabel.fontSize = 48;
+            motivationLabel.fontColor = new Color(0.5, 0.8, 1);
+            motivationLabel.position = new Vector2(this.width / 2, this.gridY + this.gridHeight / 2);
+            motivationLabel.zPosition = 80;
+            motivationLabel.alpha = 0;
+            this.scene.addChild(motivationLabel);
+
+            // Fade in, hold, fade out
+            const fadeIn = Action.fadeIn(200);
+            this.scene.run(motivationLabel, fadeIn);
+
+            setTimeout(() => {
+                const fadeOut = Action.fadeOut(400);
+                const moveUp = Action.moveBy(new Vector2(0, -50), 400);
+                this.scene.run(motivationLabel, fadeOut);
+                this.scene.run(motivationLabel, moveUp);
+            }, 800);
+
+            setTimeout(() => motivationLabel.removeFromParent(), 1300);
+        }
+
         // Spawn new blocks
-        this.spawnNewBlocks();
+        setTimeout(() => this.spawnNewBlocks(), 200);
+
+        // Small screen effect to signal fresh start
+        this.screenShake(3, 150);
     }
 
     reset() {

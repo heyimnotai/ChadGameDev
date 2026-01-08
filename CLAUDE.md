@@ -1,8 +1,8 @@
-# Ralph Loop iOS Game Development Environment
+# Chad Loop iOS Game Development Environment
 
-This project provides a complete development environment for iterative iOS game development with visual feedback loops. The "Ralph Loop" enables rapid iteration by letting you see the results of code changes and optimize accordingly.
+This project provides a complete development environment for iterative iOS game development with visual feedback loops. The "Chad Loop" enables rapid iteration by letting you see the results of code changes and optimize accordingly.
 
-## The Ralph Loop Workflow
+## The Chad Loop Workflow
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -39,7 +39,7 @@ This project provides a complete development environment for iterative iOS game 
 | `/preview` | Generate HTML5 preview and open in browser |
 | `/build` | Build native iOS app using Xcode |
 | `/test-ios` | Run on iOS Simulator or cloud |
-| `/optimize` | Full Ralph Loop optimization cycle |
+| `/optimize` | Full Chad Loop optimization cycle |
 | `/push` | Commit and push to GitHub |
 
 ## MCP Tools
@@ -68,11 +68,11 @@ Browser automation for previews:
 
 ## Project Skills
 
-### Ralph Loop Skills (`.claude/skills/`)
+### Chad Loop Skills (`.claude/skills/`)
 
 - **game-preview**: Generate HTML5 game previews from SpriteKit/SwiftUI concepts
 - **visual-testing**: Capture and analyze screenshots with Playwright
-- **ralph-optimizer**: Run the full optimization cycle
+- **chad-optimizer**: Run the full optimization cycle
 
 ### iOS Game Development Skills (`ios-game-skills/`)
 
@@ -131,10 +131,10 @@ Browser automation for previews:
 │   │   ├── test-ios.md
 │   │   ├── optimize.md
 │   │   └── push.md
-│   ├── skills/                 # Ralph Loop skills
+│   ├── skills/                 # Chad Loop skills
 │   │   ├── game-preview/
 │   │   ├── visual-testing/
-│   │   └── ralph-optimizer/
+│   │   └── chad-optimizer/
 │   ├── agents/                 # Custom agents
 │   ├── hooks/                  # Event hooks
 │   └── settings.json           # Permissions
@@ -204,7 +204,7 @@ Before shipping, ensure all gates pass:
 ### Optimizing an Existing Game
 
 1. Run `/preview` to see current state
-2. Run `/optimize` to enter Ralph Loop
+2. Run `/optimize` to enter Chad Loop
 3. Analyze screenshots for issues
 4. Apply targeted fixes
 5. Verify improvements

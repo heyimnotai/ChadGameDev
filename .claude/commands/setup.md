@@ -1,6 +1,6 @@
 # Setup - Install Dependencies
 
-Run this command before using Ralph to ensure all dependencies are installed.
+Run this command before using Chad to ensure all dependencies are installed.
 
 ## Usage
 
@@ -110,7 +110,7 @@ Playwright browser: Installed and working
 Preview system: Found at preview/index.html
 Test screenshot: Captured successfully
 
-You're ready to run /ralph
+You're ready to run /chad
 ```
 
 ### Failure

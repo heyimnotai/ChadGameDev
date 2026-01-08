@@ -1,16 +1,16 @@
-# Visual Ralph Loop: Autonomous Game Development System
+# Visual Chad Loop: Autonomous Game Development System
 
 ## Overview
 
-This system extends the Ralph Loop methodology (created by Geoffrey Huntley, popularized by Ryan Carson) specifically for **game development with visual feedback**. Unlike traditional Ralph which uses typecheck/tests as feedback signals, this system uses **screenshot analysis and multimodal AI** to evaluate gameplay, identify issues, and self-correct.
+This system extends the Chad Loop methodology (created by Geoffrey Huntley, popularized by Ryan Carson) specifically for **game development with visual feedback**. Unlike traditional Chad which uses typecheck/tests as feedback signals, this system uses **screenshot analysis and multimodal AI** to evaluate gameplay, identify issues, and self-correct.
 
 ---
 
-## How Traditional Ralph Works (Reference)
+## How Traditional Chad Works (Reference)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  TRADITIONAL RALPH LOOP                                     │
+│  TRADITIONAL CHAD LOOP                                     │
 │                                                             │
 │  prompt.md → AI Agent → Implement → typecheck/test          │
 │       ↑                                    │                │
@@ -29,11 +29,11 @@ Stop Condition: <promise>COMPLETE</promise>
 
 ---
 
-## Your System: Visual Ralph for Games
+## Your System: Visual Chad for Games
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  VISUAL RALPH LOOP FOR GAME DEVELOPMENT                                     │
+│  VISUAL CHAD LOOP FOR GAME DEVELOPMENT                                     │
 │                                                                             │
 │  User Prompt                                                                │
 │       │                                                                     │
@@ -108,9 +108,9 @@ Stop Condition: <promise>COMPLETE</promise>
 
 ---
 
-## Key Differences from Traditional Ralph
+## Key Differences from Traditional Chad
 
-| Aspect | Traditional Ralph | Visual Ralph for Games |
+| Aspect | Traditional Chad | Visual Chad for Games |
 |--------|-------------------|------------------------|
 | **Feedback Signal** | typecheck + unit tests | Screenshot analysis (multimodal) |
 | **Prompt Source** | Human-written prompt.md | AI-generated from analysis |
@@ -217,10 +217,10 @@ After analysis, Claude generates its own prompt:
 **patches.md Structure:**
 
 ```markdown
-# Ralph Patches - Game Development Knowledge Base
+# Chad Patches - Game Development Knowledge Base
 
 ## How This File Works
-When Ralph encounters a problem and solves it, the problem-solution
+When Chad encounters a problem and solves it, the problem-solution
 pair is recorded here. Future iterations consult this file BEFORE
 attempting fixes, using proven solutions instead of guessing.
 
@@ -281,17 +281,17 @@ GameSkillsFrameWork/
 ├── .claude/
 │   ├── settings.json
 │   ├── commands/
-│   │   ├── ralph.md             # Main Ralph loop command (NEW)
+│   │   ├── chad.md             # Main Chad loop command (NEW)
 │   │   ├── preview.md
 │   │   ├── optimize.md
 │   │   └── ...
 │   └── skills/
 │       ├── game-preview/
 │       ├── visual-testing/
-│       ├── ralph-optimizer/
+│       ├── chad-optimizer/
 │       └── self-prompter/       # Self-prompting logic (NEW)
 │
-├── ralph/                       # Ralph loop infrastructure (NEW)
+├── chad/                       # Chad loop infrastructure (NEW)
 │   ├── config.json              # Iteration settings
 │   ├── current-prompt.md        # Current iteration prompt
 │   ├── analysis-log.md          # Screenshot analysis history
@@ -316,15 +316,15 @@ GameSkillsFrameWork/
 
 ---
 
-## Workflow: Complete Ralph Session
+## Workflow: Complete Chad Session
 
 ### Phase 1: Initialization
 ```
 User: "Build a tap-to-collect coin game with 10 iterations"
 
 System:
-1. Create ralph/config.json with maxIterations: 10
-2. Initialize ralph/session-state.json
+1. Create chad/config.json with maxIterations: 10
+2. Initialize chad/session-state.json
 3. Load relevant skills (game-architect, core-loop, etc.)
 4. Load patches.md for known issues
 5. Generate initial game code
@@ -371,7 +371,7 @@ System:
 Each iteration, Claude generates a prompt for the next iteration:
 
 ```markdown
-# Ralph Iteration [N+1] Prompt
+# Chad Iteration [N+1] Prompt
 
 ## Context
 - Previous iteration: [N]
@@ -477,10 +477,10 @@ If all quality gates pass, output:
 ## Next Steps to Implement
 
 1. [ ] Create `patches.md` with initial structure
-2. [ ] Create `ralph/` directory with config files
-3. [ ] Create `/ralph` command in `.claude/commands/`
+2. [ ] Create `chad/` directory with config files
+3. [ ] Create `/chad` command in `.claude/commands/`
 4. [ ] Create `self-prompter` skill
-5. [ ] Update `ralph-optimizer` skill with patch integration
+5. [ ] Update `chad-optimizer` skill with patch integration
 6. [ ] Create `screenshots/` directory structure
 7. [ ] Test with simple game prompt
 8. [ ] Iterate on patch format based on real usage
@@ -489,9 +489,9 @@ If all quality gates pass, output:
 
 ## Sources & References
 
-- [Ralph Claude Code GitHub](https://github.com/frankbria/ralph-claude-code)
-- [Ralph Wiggum Technique Explained](https://dev.to/sivarampg/the-ralph-wiggum-approach-running-ai-coding-agents-for-hours-not-minutes-57c1)
-- [Awesome Claude - Ralph Wiggum](https://awesomeclaude.ai/ralph-wiggum)
-- [VentureBeat - Ralph Wiggum AI](https://venturebeat.com/technology/how-ralph-wiggum-went-from-the-simpsons-to-the-biggest-name-in-ai-right-now)
-- [Ralph Loop Guide](https://mejba.me/blog/ralph-loop-claude-code-autonomous-ai-coding-framework-guide)
-- [Brief History of Ralph](https://www.humanlayer.dev/blog/brief-history-of-ralph)
+- [Chad Claude Code GitHub](https://github.com/frankbria/chad-claude-code)
+- [Chad Wiggum Technique Explained](https://dev.to/sivarampg/the-chad-wiggum-approach-running-ai-coding-agents-for-hours-not-minutes-57c1)
+- [Awesome Claude - Chad Wiggum](https://awesomeclaude.ai/chad-wiggum)
+- [VentureBeat - Chad Wiggum AI](https://venturebeat.com/technology/how-chad-wiggum-went-from-the-simpsons-to-the-biggest-name-in-ai-right-now)
+- [Chad Loop Guide](https://mejba.me/blog/chad-loop-claude-code-autonomous-ai-coding-framework-guide)
+- [Brief History of Chad](https://www.humanlayer.dev/blog/brief-history-of-chad)

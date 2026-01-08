@@ -2,7 +2,7 @@
 node_modules/
 package-lock.json
 
-# Screenshots (generated during Ralph loops)
+# Screenshots (generated during Chad loops)
 screenshots/
 !screenshots/.gitkeep
 
@@ -18,8 +18,8 @@ projects/*/sessions/*/screenshots/
 # projects/*/game.js
 
 # Session state (regenerated each session)
-ralph/session-state.json
-ralph/current-prompt.md
+chad/session-state.json
+chad/current-prompt.md
 
 # OS files
 .DS_Store

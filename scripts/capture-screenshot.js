@@ -79,11 +79,11 @@ async function captureScreenshot(url, outputPath, waitMs = 1000) {
 
         const page = await browser.newPage();
 
-        // Set viewport to iPhone-like dimensions (matching game canvas)
+        // Set viewport large enough to fit the iPhone frame
         await page.setViewport({
-            width: 393,
-            height: 852,
-            deviceScaleFactor: 3
+            width: 800,
+            height: 900,
+            deviceScaleFactor: 2
         });
 
         console.log(`Navigating to: ${url}`);
@@ -98,8 +98,15 @@ async function captureScreenshot(url, outputPath, waitMs = 1000) {
             fs.mkdirSync(outputDir, { recursive: true });
         }
 
-        // Capture screenshot
-        await page.screenshot({ path: outputPath, fullPage: false });
+        // Capture screenshot of ONLY the iPhone frame (not the dev controls panel)
+        const iphoneFrame = await page.$('.iphone-frame');
+        if (iphoneFrame) {
+            await iphoneFrame.screenshot({ path: outputPath });
+        } else {
+            // Fallback to viewport screenshot if frame not found
+            console.log('Warning: .iphone-frame not found, capturing viewport');
+            await page.screenshot({ path: outputPath, fullPage: false });
+        }
         console.log(`Screenshot saved: ${outputPath}`);
 
         // Also capture console messages

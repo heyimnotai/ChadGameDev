@@ -131,7 +131,7 @@ After analysis, report:
 | Jerky animations | Low FPS | Reduce object count or simplify render |
 | Color mismatch | RGB vs sRGB | Use Color class system colors |
 
-## Integration with Ralph Loop
+## Integration with Chad Loop
 
 This skill is typically used as part of the optimization cycle:
 

@@ -1,30 +1,30 @@
 ---
-name: ralph-optimizer
-description: Run the full Ralph Loop optimization cycle - analyze visual output and iterate until quality gates pass
+name: chad-optimizer
+description: Run the full Chad Loop optimization cycle - analyze visual output and iterate until quality gates pass
 triggers:
   - optimize game
-  - ralph loop
+  - chad loop
   - iterate on visuals
   - optimization cycle
 ---
 
-# Ralph Optimizer Skill
+# Chad Optimizer Skill
 
-The Ralph Loop is an iterative optimization cycle that uses visual feedback to continuously improve iOS game quality. Named after the concept of "seeing like Ralph" - using AI vision to analyze and improve game visuals.
+The Chad Loop is an iterative optimization cycle that uses visual feedback to continuously improve iOS game quality. Named after the concept of "seeing like Chad" - using AI vision to analyze and improve game visuals.
 
 ## Key Innovation: Self-Prompting with Patch Learning
 
-Unlike traditional Ralph which uses static prompts, Visual Ralph:
+Unlike traditional Chad which uses static prompts, Visual Chad:
 1. **Analyzes screenshots** using multimodal AI vision
 2. **Consults patches.md** for known solutions before debugging
 3. **Generates its own prompts** for subsequent iterations
 4. **Documents new solutions** to patches.md for future use
 
-## The Visual Ralph Loop
+## The Visual Chad Loop
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│  VISUAL RALPH LOOP                                                      │
+│  VISUAL CHAD LOOP                                                      │
 │                                                                         │
 │   ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐         │
 │   │  PROMPT  │───▶│  SKILLS  │───▶│  CODE    │───▶│ PREVIEW  │         │
@@ -222,13 +222,13 @@ Use these commands during optimization:
 - `/preview` - Generate and open preview
 - `/build` - Build native iOS app
 - `/test-ios` - Run on iOS Simulator
-- `/optimize` - Run full Ralph cycle
+- `/optimize` - Run full Chad cycle
 - `/push` - Commit and push when done
 
 ## Example Optimization Session
 
 ```markdown
-## Ralph Loop - Session 1
+## Chad Loop - Session 1
 
 ### Initial Capture
 Screenshot shows: Circle off-center, score hidden under Dynamic Island
@@ -311,7 +311,7 @@ After analysis, use `self-prompter` skill to generate next iteration:
 4. Identify what's working (preserve list)
 5. Select top 3 issues for this iteration
 6. Generate detailed fix instructions
-7. Write to ralph/current-prompt.md
+7. Write to chad/current-prompt.md
 ```
 
 ### Self-Prompt Quality Checks
@@ -329,10 +329,10 @@ Generated prompts must include:
 
 ### State Files
 
-- `ralph/config.json` - Loop configuration
-- `ralph/session-state.json` - Current session state
-- `ralph/current-prompt.md` - Next iteration prompt
-- `ralph/analysis-log.md` - Full history
+- `chad/config.json` - Loop configuration
+- `chad/session-state.json` - Current session state
+- `chad/current-prompt.md` - Next iteration prompt
+- `chad/analysis-log.md` - Full history
 
 ### Screenshot Organization
 

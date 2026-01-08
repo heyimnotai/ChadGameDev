@@ -1,0 +1,13 @@
+{
+  "issues": [],
+  "lastChecked": null,
+  "format": {
+    "id": "unique-id",
+    "description": "What's wrong",
+    "feature": "Which feature is affected",
+    "severity": "critical|major|minor",
+    "status": "open|in-progress|fixed|wont-fix",
+    "foundIn": "session-id",
+    "evidence": "screenshot path or description"
+  }
+}

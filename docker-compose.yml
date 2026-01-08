@@ -1,0 +1,30 @@
+# Docker Compose for Claude Code Sandbox
+# Usage: docker compose run --rm claude
+
+services:
+  claude:
+    build: .
+    container_name: claude-sandbox
+
+    # Interactive terminal
+    stdin_open: true
+    tty: true
+
+    # Mount project directory AND Claude credentials
+    volumes:
+      # Project folder (this is the ONLY working folder Claude can access)
+      - .:/app
+      # Claude config directory (persists auth between runs)
+      - ~/.claude:/home/node/.claude
+      # Claude settings file (also needed for auth)
+      - ~/.claude.json:/home/node/.claude.json
+
+    # Working directory
+    working_dir: /app
+
+    # Expose port for preview server
+    ports:
+      - "8080:8080"
+
+    # Default command (can be overridden)
+    command: claude-sup

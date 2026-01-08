@@ -10,11 +10,11 @@ triggers:
 
 # Self-Prompter Skill
 
-This skill enables Claude to analyze visual output and generate its own prompt for the next iteration. This is the core innovation of Visual Ralph - instead of humans writing prompts, the AI examines screenshots and writes specific, actionable instructions for itself.
+This skill enables Claude to analyze visual output and generate its own prompt for the next iteration. This is the core innovation of Visual Chad - instead of humans writing prompts, the AI examines screenshots and writes specific, actionable instructions for itself.
 
 ## Purpose
 
-Traditional Ralph uses human-written prompts that stay static. Visual Ralph uses AI-generated prompts that adapt based on what the AI actually sees in the game. This creates a true feedback loop.
+Traditional Chad uses human-written prompts that stay static. Visual Chad uses AI-generated prompts that adapt based on what the AI actually sees in the game. This creates a true feedback loop.
 
 ## When to Use
 
@@ -125,7 +125,7 @@ Select top 3 issues for this iteration (prevent overwhelm):
 Generate the complete prompt for next iteration:
 
 ```markdown
-# Ralph Iteration [N+1] Prompt
+# Chad Iteration [N+1] Prompt
 
 ## Context
 - Session: [session-id]
@@ -208,14 +208,14 @@ If you solve an issue not in patches.md, document it:
 
 ### Step 7: Write to Current Prompt File
 
-Save generated prompt to `ralph/current-prompt.md` for next iteration.
+Save generated prompt to `chad/current-prompt.md` for next iteration.
 
 ## Self-Prompt Template
 
 Use this template when generating prompts:
 
 ```markdown
-# Ralph Iteration [N+1] Prompt
+# Chad Iteration [N+1] Prompt
 
 ## Context
 - Previous iteration: [N]
@@ -287,14 +287,14 @@ Priority 1: Add emitter.start() at line 47 of game.js after scene.addChild(emitt
 Verify by capturing screenshot - yellow particles should appear at tap coordinates.
 ```
 
-## Integration with Ralph Loop
+## Integration with Chad Loop
 
 This skill is called after:
 1. `visual-testing` captures screenshots
-2. `ralph-optimizer` analyzes quality gates
+2. `chad-optimizer` analyzes quality gates
 
 The generated prompt is:
-1. Saved to `ralph/current-prompt.md`
+1. Saved to `chad/current-prompt.md`
 2. Read at start of next iteration
 3. Executed by following the fix instructions
 
@@ -305,7 +305,7 @@ Iteration 3:
   ↓
 visual-testing: Capture screenshots
   ↓
-ralph-optimizer: Analyze, find 4 issues
+chad-optimizer: Analyze, find 4 issues
   ↓
 self-prompter: Generate iteration 4 prompt
   • Summarize: 4 issues (1 critical, 2 high, 1 medium)

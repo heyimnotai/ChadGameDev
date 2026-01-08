@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "description": "Visual Ralph Loop configuration for game development",
+  "description": "Visual Chad Loop configuration for game development",
 
   "iteration": {
     "maxIterations": 10,
@@ -70,7 +70,7 @@
   },
 
   "logging": {
-    "analysisLog": "ralph/analysis-log.md",
+    "analysisLog": "chad/analysis-log.md",
     "verbose": true,
     "saveScreenshots": true
   }
