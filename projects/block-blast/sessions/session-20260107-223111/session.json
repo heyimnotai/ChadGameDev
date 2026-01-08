@@ -1,0 +1,12 @@
+{
+  "sessionId": "session-20260107-223111",
+  "startedAt": "2026-01-07T22:31:11Z",
+  "projectName": "block-blast",
+  "mode": "continue",
+  "focus": "auto",
+  "maxIterations": 5,
+  "currentIteration": 0,
+  "improvements": [],
+  "errorsFixed": [],
+  "status": "running"
+}

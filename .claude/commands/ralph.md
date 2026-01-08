@@ -70,119 +70,29 @@ Step 3b (Continue): Select Project & Focus
 
 ---
 
-## CRITICAL: First-Time Setup
+## Technical Reference
 
-**If a previous run hung**, kill any stuck processes first:
-```bash
-pkill -f chromium; pkill -f chrome
-```
+**WSL Browser Handling:**
+- Screenshots: `node scripts/capture-screenshot.js <url> <output> [wait-ms]`
+- User preview: `explorer.exe "$(wslpath -w [path])"`
+- NEVER use MCP Playwright tools (lock issues)
 
-## WSL Browser Handling
-
-**IMPORTANT: This system runs in WSL. Browser handling is different:**
-
-1. **Screenshots use Puppeteer script** - Bash-based, no MCP lock issues
-2. **User preview uses Windows** - Always use `explorer.exe` to open in Windows browser
-
-**NEVER use MCP Playwright tools** - they have persistent lock/install issues.
-**ALWAYS use the bash puppeteer script** at `scripts/capture-screenshot.js`
-
-For screenshots: `node scripts/capture-screenshot.js <url> <output-path> [wait-ms]`
-For user preview: `explorer.exe "$(wslpath -w [path])"`
+**If screenshots fail:** See Troubleshooting section at bottom.
 
 ---
 
 ## Workflow
 
-### Phase 0: Prerequisites Check (MANDATORY - DO NOT SKIP)
+### Phase 1: Interactive Project Selection (START HERE)
 
-**STOP. Before ANY other action, you MUST complete these steps in order.**
+**YOUR FIRST ACTION: Call AskUserQuestion to get user's choice.**
 
-#### Step 1: Install All Dependencies via Bash (REQUIRED FIRST ACTION)
+No setup checks needed - assume user followed README setup guide.
+If something fails later, diagnose then.
 
-**YOUR VERY FIRST ACTION must be running this bash command. No exceptions.**
+#### Question 1: Project Mode (IMMEDIATE - NO PREAMBLE)
 
-Use the Bash tool with timeout of 300000 (5 minutes) to run:
-```bash
-cd /home/wsley/Coding/GameSkillsFrameWork && npm install && npx playwright install chromium
-```
-
-This command:
-1. Installs npm dependencies (puppeteer-core, @playwright/test)
-2. Downloads Chromium browser (~165MB first time)
-
-**DO NOT use MCP Playwright tools** - they have persistent lock issues.
-
-WAIT for this to complete. First-time install takes 1-2 minutes.
-If it shows "Chromium downloaded to..." or "up to date" it worked.
-If it fails, STOP and report the error to the user.
-
-#### Step 1.5: Check System Dependencies (WSL ONLY - First time setup)
-
-**If screenshots fail with "libnspr4.so" or similar library errors:**
-
-Tell the user to run this ONE TIME:
-```bash
-sudo apt-get update && sudo apt-get install -y libnspr4 libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libpango-1.0-0 libcairo2 libasound2
-```
-
-Or the shorter version:
-```bash
-sudo npx playwright install-deps chromium
-```
-
-This installs system libraries Chromium needs on Linux/WSL. Only needed once.
-
-#### Step 2: Verify Core Files Exist
-
-```
-Use Glob or Read to verify these files exist:
-- preview/index.html
-- preview/game-renderer.js
-- scripts/capture-screenshot.js
-
-If ANY are missing: STOP and report to user.
-```
-
-#### Step 3: Test Screenshot Script Works
-
-```
-ONLY after Step 1 completes successfully:
-
-Use Bash to test the screenshot script:
-node /home/wsley/Coding/GameSkillsFrameWork/scripts/capture-screenshot.js file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html /home/wsley/Coding/GameSkillsFrameWork/screenshots/test-init.png 500
-
-If this fails with "Could not find Chrome": Run Step 1 again (npx playwright install chromium)
-If this succeeds: You'll see "Screenshot saved: ..."
-
-This runs completely headless via bash - no GUI, no MCP, no lock issues.
-```
-
-#### Step 4: Confirm Ready
-
-```
-Print to user:
-"Prerequisites passed:
-  ✓ Dependencies installed
-  ✓ Core files found
-  ✓ Screenshot script working
-
-Ready for project selection..."
-```
-
-**DO NOT proceed to Phase 1 until all 4 steps complete successfully.**
-
----
-
-### Phase 1: Interactive Project Selection
-
-**After prerequisites pass, YOU MUST USE THE AskUserQuestion TOOL to present choices.**
-
-**DO NOT just print text and wait. USE THE TOOL.**
-
-#### Question 1: Project Mode (USE AskUserQuestion TOOL NOW)
-
-**IMMEDIATELY call the AskUserQuestion tool with these EXACT parameters:**
+**Call AskUserQuestion tool NOW with these EXACT parameters:**
 
 ```json
 {
@@ -347,7 +257,7 @@ Read `projects/[project-name]/project.json` for context.
 
 ---
 
-### Phase 1.5: Session Setup
+### Phase 2: Session Setup
 
 After project selection (new or continue):
 
@@ -385,7 +295,7 @@ After project selection (new or continue):
    - Create `screenshots/session-[ID]/` directory
    - Update `ralph/session-state.json`
 
-### Phase 2: Sub-Agent Architecture
+### Phase 3: Sub-Agent Architecture
 
 **Ralph uses sub-agents for hands-off development.** The main orchestrator manages the loop while sub-agents do the actual coding work with full permissions.
 
@@ -464,7 +374,7 @@ Simply exit. The orchestrator will capture screenshots and analyze results.
 
 ---
 
-### Phase 2.5: Initial Game Generation
+### Phase 3.5: Initial Game Generation (New Games Only)
 
 For NEW games, spawn a sub-agent to create the initial game:
 
@@ -505,7 +415,7 @@ Create a complete, playable game. Exit when done.
 
 ---
 
-### Phase 3: Continuous Improvement Loop
+### Phase 4: Continuous Improvement Loop
 
 **IMPORTANT: Ralph does NOT stop when errors are fixed. Ralph continuously improves the game for ALL iterations.**
 
@@ -739,7 +649,7 @@ The loop ends when:
 **The loop should almost always run all iterations.**
 Use all the iterations the user gave you to make the game as good as possible.
 
-### Phase 4: Completion
+### Phase 5: Completion
 
 When loop ends (max iterations reached):
 
