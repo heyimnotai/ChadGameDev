@@ -654,17 +654,35 @@ When loop ends (max iterations reached):
 
    Note: The command may return exit code 1 but still work - that's expected on WSL.
 
-   Tell the user:
+8. **Display Clickable Test Link (REQUIRED)**
+
+   **ALWAYS output the test URL as a clickable link for the user.**
+
+   Print this EXACT format (the link should be clickable in the terminal):
+
    ```
-   "Game saved to: projects/[project-name]/
+   ═══════════════════════════════════════════════════════════════
 
-   Game preview opened in your browser. Test it out!
+   GAME COMPLETE: [project-name]
 
-   To continue improving this game later, run /ralph and select 'Continue Project'.
+   Iterations: [N]/[N]
+   Improvements: [X] enhancements made
 
-   If the browser didn't open, manually navigate to:
-   \\wsl.localhost\Ubuntu\home\wsley\Coding\GameSkillsFrameWork\preview\index.html"
+   ► TEST YOUR GAME:
+   file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html
+
+   ► Windows path (if above doesn't work):
+   \\wsl.localhost\Ubuntu\home\wsley\Coding\GameSkillsFrameWork\preview\index.html
+
+   ► Project saved to:
+   projects/[project-name]/
+
+   To continue improving: run /ralph → Continue Project → [project-name]
+
+   ═══════════════════════════════════════════════════════════════
    ```
+
+   The `file:///` URL should be clickable in most terminals.
 
 ---
 
