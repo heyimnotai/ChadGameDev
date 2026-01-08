@@ -75,12 +75,27 @@ Token counts are ACTUAL usage (captured from sub-agent output), cumulative acros
 
 ## Workflow
 
-### Phase 1: Interactive Project Selection (START HERE)
+### Phase 0: Gather Project Info (SILENT - NO OUTPUT)
 
-**YOUR FIRST ACTION: Call AskUserQuestion to get user's choice.**
+**BEFORE any user interaction, silently gather project data:**
 
-No setup checks needed - assume user followed README setup guide.
-If something fails later, diagnose then.
+Use Glob tool to find projects:
+```
+Glob pattern: "projects/*/project.json"
+```
+
+For each project.json found, use Read tool to get:
+- name, totalIterations, totalTokens from project.json
+
+Store this info mentally - you'll need it for the project selection question.
+
+**DO NOT print anything. DO NOT run bash. Just gather the data silently.**
+
+---
+
+### Phase 1: Interactive Project Selection
+
+**After gathering project info, IMMEDIATELY call AskUserQuestion.**
 
 #### Question 1: Project Mode (IMMEDIATE - NO PREAMBLE)
 
@@ -199,22 +214,11 @@ If user selected "Continue Project":
 
 **Question 3B: Select Project (USE AskUserQuestion TOOL)**
 
-First, list existing projects and gather stats:
-```bash
-ls -d projects/*/ 2>/dev/null | xargs -I {} basename {}
-```
+**You already have the project data from Phase 0. Use it immediately.**
 
-For each project, read `projects/[name]/project.json` which contains:
-- `totalIterations` - cumulative iteration count
-- `totalTokens` - cumulative actual token usage
+DO NOT run any bash or glob commands here - you gathered this info at the start.
 
-```bash
-# Read project.json for each project
-cat projects/[name]/project.json
-# Use totalIterations and totalTokens fields
-```
-
-Then call AskUserQuestion with token info in description:
+Call AskUserQuestion with the projects you found:
 
 ```json
 {
