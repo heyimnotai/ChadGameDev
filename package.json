@@ -1,0 +1,16 @@
+{
+  "name": "visual-ralph-loop",
+  "version": "1.0.0",
+  "description": "AI-powered autonomous game development framework using visual feedback loops",
+  "private": true,
+  "scripts": {
+    "setup": "npm install && npx playwright install chromium",
+    "preview": "open preview/index.html || xdg-open preview/index.html"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.57.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

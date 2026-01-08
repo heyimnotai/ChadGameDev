@@ -14,23 +14,26 @@ Run this command before using Ralph to ensure all dependencies are installed.
 
 Before doing anything, verify the following are working:
 
-### 1. Install Playwright Browser via Bash
+### 1. Install All Dependencies via Bash
 
 **IMPORTANT: Do NOT use mcp__playwright__browser_install - it hangs.**
 
-Use the Bash tool to run:
+Use the Bash tool with timeout of 300000 (5 minutes) to run:
 ```bash
-npx playwright install chromium
+cd /home/wsley/Coding/GameSkillsFrameWork && npm install && npx playwright install chromium
 ```
 
-Set timeout to 300000 (5 minutes) as first-time install downloads ~165MB.
+This installs:
+1. npm dependencies (@playwright/test)
+2. Chromium browser (~165MB first time)
 
 **Expected output:**
 ```
+added X packages in Xs
 Chromium 143.x.x downloaded to /home/user/.cache/ms-playwright/chromium-xxxx
 ```
 
-If it says "already installed" or shows the download progress, it's working.
+If it says "up to date" or shows download progress, it's working.
 
 ### 2. Test Browser Launch
 

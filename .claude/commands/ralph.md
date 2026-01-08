@@ -31,24 +31,23 @@ pkill -f chrome
 
 **STOP. Before ANY other action, you MUST complete these steps in order.**
 
-#### Step 1: Install Browser via Bash (REQUIRED FIRST ACTION)
+#### Step 1: Install All Dependencies via Bash (REQUIRED FIRST ACTION)
 
 **YOUR VERY FIRST ACTION must be running this bash command. No exceptions.**
 
+Use the Bash tool with timeout of 300000 (5 minutes) to run:
 ```bash
-# Run this FIRST - installs Chromium if not present
-npx playwright install chromium
+cd /home/wsley/Coding/GameSkillsFrameWork && npm install && npx playwright install chromium
 ```
 
-Use the Bash tool with timeout of 300000 (5 minutes) to run:
-```
-npx playwright install chromium
-```
+This command:
+1. Installs npm dependencies (@playwright/test)
+2. Downloads Chromium browser (~165MB first time)
 
 **DO NOT use mcp__playwright__browser_install** - it hangs. Use Bash instead.
 
-WAIT for this to complete. First-time install downloads ~165MB and takes 1-2 minutes.
-If it shows "Chromium downloaded to..." it worked.
+WAIT for this to complete. First-time install takes 1-2 minutes.
+If it shows "Chromium downloaded to..." or "up to date" it worked.
 If it fails, STOP and report the error to the user.
 
 #### Step 2: Verify Preview Files Exist
