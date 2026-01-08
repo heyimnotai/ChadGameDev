@@ -369,11 +369,18 @@ Use Playwright to interact with the game:
 - Re-test until it works
 - THEN proceed
 
-### Step 5: Log Progress
-Print: "═══ Iteration X/[N] ═══" with changes and test results
+### Step 5: WRITE Progress Log
+Append detailed progress to `progress.log` after each iteration:
+- Changes made (what and why)
+- Test results (pass/fail with details)
+- Issues found
+- Next iteration plan
+
+Also print summary to stdout.
 
 ### Step 6: Continue
-Repeat until all [N] iterations complete
+**NEVER finish early. Always use all [N] iterations.**
+Even after initial game works, keep improving with juice/polish/mechanics.
 
 ## Quality Standards
 - 60 FPS target
@@ -481,13 +488,58 @@ For each feature you added/changed:
 - Re-test until it works
 - THEN proceed
 
-### Step 5: Log Progress
-Print: "═══ Iteration X/[N] ═══" with:
-- Changes made
-- Features tested
-- Test results (pass/fail)
+### Step 5: WRITE Progress Log (CRITICAL - User Visibility)
+**After EACH iteration, append to progress.log so user can monitor:**
 
-### Step 6: Continue
+```bash
+cat >> projects/[project-name]/sessions/[session-id]/progress.log << 'EOF'
+
+═══════════════════════════════════════════════════════════════
+ITERATION [X]/[N] - $(date)
+═══════════════════════════════════════════════════════════════
+
+CHANGES MADE:
+1. [Change description]
+   - What: [specific code change]
+   - Why: [reason for change]
+
+2. [Change description]
+   - What: [specific code change]
+   - Why: [reason for change]
+
+TEST RESULTS:
+- [Feature 1]: ✓ PASSED / ✗ FAILED
+  Details: [what was tested, what happened]
+
+- [Feature 2]: ✓ PASSED / ✗ FAILED
+  Details: [what was tested, what happened]
+
+ISSUES FOUND THIS ITERATION:
+- [Any new bugs or problems discovered]
+
+NEXT ITERATION PLAN:
+- [What will be addressed next]
+
+EOF
+```
+
+Also print to stdout so it appears in the output log.
+
+### Step 6: Continue - IMPORTANT BEHAVIOR
+
+**If user specified a specific bug/fix:**
+- First 1-3 iterations: Focus on fixing that specific issue
+- ONCE FIXED: Automatically switch to general improvements
+- DO NOT stop just because the bug is fixed
+- USE ALL [N] ITERATIONS to make the game better
+
+**After specific fix is complete, shift to:**
+1. P3 - Juice/polish (animations, particles, screen shake)
+2. P4 - New mechanics (power-ups, combos, variety)
+3. P5 - Retention (rewards, difficulty curve, hooks)
+
+**NEVER finish early. Always use all iterations.**
+
 Repeat until all [N] iterations complete
 
 ## Improvement Priorities
@@ -525,10 +577,29 @@ Game saved to: projects/[project-name]/game.js
 
 ### Phase 3: Wait for Completion
 
-After spawning the loop runner, the orchestrator waits.
+After spawning the loop runner, **tell the user how to monitor progress:**
+
+```
+═══════════════════════════════════════════════════════════════
+RALPH LOOP STARTED
+
+The sub-agent is now running autonomously.
+
+TO MONITOR PROGRESS (in another terminal):
+  tail -f projects/[project-name]/sessions/[session-id]/progress.log
+
+TO SEE FULL OUTPUT:
+  tail -f projects/[project-name]/sessions/[session-id]/output.log
+
+Session folder: projects/[project-name]/sessions/[session-id]/
+
+The loop will run all [N] iterations. Check back when done!
+═══════════════════════════════════════════════════════════════
+```
 
 The sub-agent will:
 - Run all iterations autonomously
+- Write detailed progress to progress.log after each iteration
 - Print progress for each iteration
 - Exit when complete
 
