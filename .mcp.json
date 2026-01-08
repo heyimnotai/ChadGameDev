@@ -12,7 +12,7 @@
       "command": "npx",
       "args": ["@playwright/mcp@latest"],
       "env": {
-        "PLAYWRIGHT_HEADLESS": "false"
+        "PLAYWRIGHT_HEADLESS": "true"
       }
     }
   }

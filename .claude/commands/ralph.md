@@ -78,6 +78,18 @@ pkill -f chromium
 pkill -f chrome
 ```
 
+## WSL Browser Handling
+
+**IMPORTANT: This system runs in WSL. Browser handling is different:**
+
+1. **Playwright runs HEADLESS** - For automated screenshots only, no GUI window
+2. **User preview uses Windows** - Always use `explorer.exe` to open in Windows browser
+
+**NEVER try to open a visible browser window in WSL - it will hang.**
+
+For screenshots: Use Playwright MCP tools (headless)
+For user preview: Use `explorer.exe "$(wslpath -w [path])"`
+
 ---
 
 ## Workflow
@@ -115,7 +127,7 @@ Use Glob or Read to verify these files exist:
 If ANY are missing: STOP and report to user.
 ```
 
-#### Step 3: Test Browser Works
+#### Step 3: Test Headless Browser Works
 
 ```
 ONLY after Step 1 completes successfully:
@@ -123,9 +135,13 @@ ONLY after Step 1 completes successfully:
 Call: mcp__playwright__browser_navigate
 Parameters: url = "about:blank"
 
+This runs HEADLESS (no visible window) - configured in .mcp.json.
+
 If this fails with "browser not found": Run Step 1 again.
-If this fails for other reasons: STOP and report error.
+If this hangs: The MCP may not be in headless mode. Check .mcp.json has PLAYWRIGHT_HEADLESS=true
 If success: Close browser with mcp__playwright__browser_close
+
+NOTE: This test runs invisibly. No window should appear.
 ```
 
 #### Step 4: Confirm Ready
