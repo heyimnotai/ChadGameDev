@@ -285,459 +285,212 @@ After project selection (new or continue):
    - Create `screenshots/session-[ID]/` directory
    - Update `ralph/session-state.json`
 
-### Phase 3: Sub-Agent Architecture
+### Phase 3: Launch Autonomous Loop Runner
 
-**Ralph uses sub-agents for hands-off development.** The main orchestrator manages the loop while sub-agents do the actual coding work with full permissions.
+**After user selections, spawn ONE sub-agent that handles the ENTIRE loop.**
 
-**IMPORTANT: Sub-agents ALWAYS run with `--dangerously-skip-permissions`** - this is automatic when the user invokes `/ralph`. The user grants permission by running the command.
+This is the key to hands-off operation: ONE permission prompt, then full automation.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  RALPH ORCHESTRATOR (Main Claude)                                           │
-│  - Manages project selection                                                │
-│  - Analyzes screenshots                                                     │
-│  - Decides what to improve                                                  │
-│  - Spawns sub-agents for each iteration                                     │
-│  - Tracks progress and patches                                              │
+│  ORCHESTRATOR (Main Claude - YOU)                                           │
+│  - Handles user interaction (Phase 1-2)                                     │
+│  - Spawns ONE loop runner sub-agent                                         │
+│  - Waits for completion                                                     │
+│  - Shows results to user                                                    │
 └─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                          (ONE spawn, ONE permission)
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  SUB-AGENT (Iteration Worker)                                               │
-│  - Runs with: claude --dangerously-skip-permissions                         │
-│  - Receives specific task prompt                                            │
-│  - Writes/modifies game code                                                │
-│  - No permission prompts = faster iteration                                 │
-│  - Returns when task complete                                               │
+│  LOOP RUNNER (Sub-Agent with --dangerously-skip-permissions)                │
+│  - Runs ALL iterations autonomously                                         │
+│  - Captures screenshots, analyzes, writes code                              │
+│  - No permission prompts for anything                                       │
+│  - Exits when all iterations complete                                       │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-#### How to Spawn Sub-Agents
+#### Spawn the Loop Runner
 
-For each iteration, use the **Bash tool** to spawn a sub-agent:
+**Use Bash to spawn a SINGLE sub-agent that runs the entire loop:**
 
 ```bash
-echo "[ITERATION PROMPT]" | claude --dangerously-skip-permissions -p
+cd /home/wsley/Coding/GameSkillsFrameWork && claude --dangerously-skip-permissions -p "[LOOP_RUNNER_PROMPT]"
 ```
 
-Or use the **Task tool** with `subagent_type: "Bash"` to run:
-```bash
-cd /home/wsley/Coding/GameSkillsFrameWork && claude --dangerously-skip-permissions -p "[PROMPT]"
-```
-
-#### Sub-Agent Prompt Template
-
-Each sub-agent receives a focused prompt:
-
-```markdown
-# Ralph Iteration [N] - [Project Name]
-
-## Your Task
-You are a sub-agent in the Ralph Loop. Complete this iteration's improvements.
-
-## Project Location
-- Game file: preview/game.js
-- Project folder: projects/[project-name]/
-
-## This Iteration's Focus
-[From orchestrator's analysis]
-
-### Errors to Fix (P0-P2)
-[List of specific errors with file locations]
-
-### Improvements to Make (P3-P5)
-[List of specific improvements with implementation details]
-
-## Instructions
-1. Read the current game.js
-2. Make the specified changes
-3. Save the file
-4. Exit when done
-
-## Quality Standards
-- Maintain 60 FPS
-- Respect safe areas (top: 162px, bottom: 102px at 3x)
-- Use game-renderer.js abstractions
-- Add juice and polish to every interaction
-
-## When Done
-Simply exit. The orchestrator will capture screenshots and analyze results.
-```
+The prompt must include ALL context needed to run autonomously:
+- Project name and path
+- Mode (new/continue)
+- Number of iterations
+- Game idea (if new) or focus area (if continue)
+- Full instructions for the loop
 
 ---
 
-### Phase 3.5: Initial Game Generation (New Games Only)
+#### Loop Runner Prompt Template (NEW GAME)
 
-For NEW games, spawn a sub-agent to create the initial game:
+```markdown
+# Ralph Loop Runner - New Game
 
-```bash
-cd /home/wsley/Coding/GameSkillsFrameWork && claude --dangerously-skip-permissions -p "
-# Create New Game: [Project Name]
+## Project Setup
+- Project: [project-name]
+- Location: /home/wsley/Coding/GameSkillsFrameWork
+- Game file: preview/game.js
+- Project folder: projects/[project-name]/
+- Session: [session-id]
+- Iterations: [N]
 
 ## Game Concept
 [User's game description]
 
-## Your Task
-Create preview/game.js implementing this game concept.
+## Your Mission
+Run [N] iterations of the Ralph Loop autonomously. Create the game, then continuously improve it.
 
-## Technical Requirements
-- Use game-renderer.js abstractions (SpriteNode, ShapeNode, LabelNode, Action, Scene, ParticleEmitter)
-- Canvas: 1179x2556 at 3x scale (393x852 logical)
-- Safe area top: 162px, bottom: 102px
-- Target 60 FPS
-- Implement touch handling
+## Phase A: Create Initial Game
+1. Create preview/game.js implementing the game concept
+2. Use game-renderer.js abstractions (SpriteNode, ShapeNode, LabelNode, Action, Scene, ParticleEmitter)
+3. Canvas: 1179x2556 at 3x scale (393x852 logical)
+4. Safe areas: top 162px, bottom 102px
+5. Implement: state machine, core loop, scoring, visual feedback, game over
 
-## Game Structure
-1. Game state machine (menu, playing, gameOver)
-2. Core gameplay loop
-3. Score tracking
-4. Visual feedback on actions
-5. Game over condition
+## Phase B: Run Improvement Loop
+For each iteration 1 to [N]:
 
-## Invoke Skills
-Use these skills from ios-game-skills/:
-- core-loop-architect
-- juice-orchestrator
-- particle-effects
-- dopamine-optimizer
+### Step 1: Capture Screenshot
+node scripts/capture-screenshot.js "file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html" "projects/[project-name]/sessions/[session-id]/screenshots/iteration-X.png" 2000
 
-Create a complete, playable game. Exit when done.
-"
-```
+### Step 2: Analyze Screenshot
+Read the screenshot and evaluate:
+- P0-P2: Errors (crashes, bugs, layout issues)
+- P3-P5: Improvements (polish, mechanics, retention)
 
----
+### Step 3: Make Improvements
+Edit preview/game.js to fix errors and add improvements (max 3 changes per iteration)
 
-### Phase 4: Continuous Improvement Loop
+### Step 4: Log Progress
+Print: "═══ Iteration X/[N] ═══" with summary of changes
 
-**IMPORTANT: Ralph does NOT stop when errors are fixed. Ralph continuously improves the game for ALL iterations.**
-
-The loop runs for ALL iterations (1 to maxIterations). Each iteration:
-1. **Orchestrator** captures screenshots and analyzes
-2. **Orchestrator** decides what to improve
-3. **Sub-agent** implements the improvements (with --dangerously-skip-permissions)
-4. **Orchestrator** verifies and continues
-
-**Philosophy: "Is there anything that could be better about this game?"**
-- If YES → Spawn sub-agent to make improvements
-- If NO → Only then consider stopping early (rare)
-
----
-
-#### Improvement Priority System
-
-When analyzing, work through these priorities IN ORDER:
-
-| Priority | Category | Focus | Examples |
-|----------|----------|-------|----------|
-| P0 | **Critical Errors** | Game-breaking bugs | Blank screen, crashes, no touch response |
-| P1 | **Functional Bugs** | Things that don't work | Score not updating, wrong collision |
-| P2 | **Visual Issues** | Layout/display problems | Safe area violations, clipping, alignment |
-| P3 | **Polish & Juice** | Game feel improvements | Better animations, particles, screen shake |
-| P4 | **Mechanics** | Gameplay additions | New obstacles, power-ups, combo systems |
-| P5 | **Retention Optimization** | Player psychology | Reward timing, difficulty curve, session hooks |
-
-**ALWAYS find something to improve.** Even a "perfect" game can have:
-- Smoother animations
-- More satisfying sound cues
-- Better particle effects
-- Tighter difficulty curves
-- More rewarding feedback loops
-
----
-
-#### Step 1: Capture Screenshots
-
-**Use the bash puppeteer script (NOT MCP Playwright):**
-
-```bash
-# Create iteration screenshot directory
-mkdir -p projects/[project-name]/sessions/[session-id]/screenshots/iteration-[N]
-
-# Capture initial state (game loaded)
-node scripts/capture-screenshot.js \
-  "file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html" \
-  "projects/[project-name]/sessions/[session-id]/screenshots/iteration-[N]/initial.png" \
-  1000
-
-# Capture after wait (for animations/gameplay)
-node scripts/capture-screenshot.js \
-  "file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html" \
-  "projects/[project-name]/sessions/[session-id]/screenshots/iteration-[N]/gameplay.png" \
-  3000
-```
-
-Then use the Read tool to view the captured screenshots for analysis.
-
-#### Step 2: Deep Analysis (Errors AND Improvements)
-```
-Examine each screenshot through TWO lenses:
-
-LENS 1 - ERROR DETECTION (P0-P2):
-- Quality gate violations?
-- Visual bugs or glitches?
-- Functional problems?
-- Layout issues?
-
-LENS 2 - IMPROVEMENT OPPORTUNITIES (P3-P5):
-- Could animations be smoother/juicier?
-- Are particle effects satisfying enough?
-- Is the feedback loop tight?
-- Could difficulty curve be better?
-- Are rewards timed for maximum dopamine?
-- Would screen shake add impact?
-- Is the pacing optimal for retention?
-- Could there be more variety?
-- Are touch targets satisfying to hit?
-- Does the game "feel" good?
-
-If no errors found, you MUST find improvements.
-Ask: "What would make a player want to play this for 30 more seconds?"
-```
-
-#### Step 3: Consult Skills for Improvements
-```
-Based on what you want to improve, invoke relevant skills:
-
-For Polish (P3):
-- juice-orchestrator: Overall game feel
-- particle-effects: Visual effects
-- animation-system: Smooth animations
-- screen-shake-impact: Impact feedback
-- haptic-optimizer: Tactile feedback
-- audio-designer: Sound design
-
-For Mechanics (P4):
-- core-loop-architect: Gameplay loop refinement
-- difficulty-tuner: Challenge balancing
-- progression-system: Advancement mechanics
-
-For Retention (P5):
-- dopamine-optimizer: Reward timing
-- reward-scheduler: Variable rewards
-- session-designer: Session length optimization
-- retention-engineer: Long-term hooks
-- onboarding-architect: First experience
-```
-
-#### Step 4: Consult Patches
-```
-For errors: Search patches.md by symptom
-For improvements: Check if similar enhancements documented
-
-If implementing something new that works well, prepare to document it.
-```
-
-#### Step 5: Generate Improvement Plan
-```
-Create a prioritized list:
-
-## Iteration [N] Plan
-
-### Errors to Fix (if any)
-1. [P0/P1/P2] Description - specific fix
-
-### Improvements to Make
-1. [P3] Add screen shake on coin collect - 3px, 100ms
-2. [P4] Add combo multiplier for rapid taps
-3. [P5] Implement near-miss reward for close calls
-
-### Retention Check
-- [ ] Does collecting feel satisfying?
-- [ ] Is there a reason to play "one more time"?
-- [ ] Are rewards unpredictable enough?
-- [ ] Is difficulty ramping appropriately?
-```
-
-#### Step 6: Spawn Sub-Agent to Apply Changes
-
-**DO NOT make changes directly. Spawn a sub-agent with full permissions.**
-
-Use Bash tool to spawn the iteration worker:
-
-```bash
-cd /home/wsley/Coding/GameSkillsFrameWork && claude --dangerously-skip-permissions -p "
-# Ralph Iteration [N] - [Project Name]
-
-## Your Task
-You are a sub-agent in the Ralph Loop. Implement these improvements.
-
-## Files
-- Game: preview/game.js
-- Renderer: preview/game-renderer.js (read-only reference)
-
-## Errors to Fix
-[List from Step 5, or 'None' if no errors]
-
-## Improvements to Make
-[List from Step 5 - max 3 items]
-
-## Implementation Notes
-[Specific code guidance from patches.md or skills]
+### Step 5: Continue
+Repeat until all [N] iterations complete
 
 ## Quality Standards
-- Maintain 60 FPS
-- Safe areas: top 162px, bottom 102px (at 3x scale)
-- Use existing game-renderer.js classes
-- Every interaction should feel satisfying
+- 60 FPS target
+- Safe areas respected
+- Every interaction feels satisfying
+- Always find something to improve
 
-Exit when changes are complete.
-"
-```
-
-**Wait for sub-agent to complete before continuing.**
-
-The sub-agent will:
-- Read the current game.js
-- Make the specified changes
-- Save the file
-- Exit automatically
-
-Sub-agent runs with `--dangerously-skip-permissions` so there are no interruptions.
-
-#### Step 7: Verify Quality Gates
-```
-Evaluate all gates:
-- [ ] Renders: Canvas visible, no errors
-- [ ] Layout: Safe areas respected
-- [ ] Visual: Colors, FPS, typography correct
-- [ ] Interaction: Touch works with good feedback
-- [ ] Logic: Score, states, conditions work
-
-Gates passing does NOT mean loop ends.
-Gates passing means you can focus on P3-P5 improvements.
-```
-
-#### Step 8: Retention Self-Check
-```
-Ask these questions EVERY iteration:
-
-1. "Would I tap again?" - Is action satisfying?
-2. "What's the hook?" - Why keep playing?
-3. "Where's the dopamine?" - When do players feel good?
-4. "Is there anticipation?" - Do players look forward to something?
-5. "Is there surprise?" - Are there unexpected delights?
-
-If any answer is weak, that's your next improvement target.
-```
-
-#### Step 9: Update State & Continue
-```
-- Log iteration to analysis-log.md
-- Update session-state.json
-- Document new patterns to patches.md
-- Generate next iteration prompt
-- CONTINUE TO NEXT ITERATION (don't stop just because gates pass)
+## When Done
+1. Copy final game: cp preview/game.js projects/[project-name]/game.js
+2. Print completion summary
+3. Print test URL: file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html
+4. Exit
 ```
 
 ---
 
-#### When Does the Loop Actually End?
+#### Loop Runner Prompt Template (CONTINUE PROJECT)
 
-The loop ends when:
-1. **Max iterations reached** (most common - this is expected!)
-2. **User interrupts** (they've seen enough)
-3. **Game is truly optimized** (rare - only if you genuinely cannot think of ANY improvement)
+```markdown
+# Ralph Loop Runner - Continue Project
 
-**The loop should almost always run all iterations.**
-Use all the iterations the user gave you to make the game as good as possible.
+## Project Setup
+- Project: [project-name]
+- Location: /home/wsley/Coding/GameSkillsFrameWork
+- Game file: preview/game.js (already loaded from project)
+- Project folder: projects/[project-name]/
+- Session: [session-id]
+- Iterations: [N]
+- Focus: [auto-improve / user-specified-focus]
+
+## Your Mission
+Run [N] iterations of the Ralph Loop autonomously on the existing game.
+
+## Run Improvement Loop
+For each iteration 1 to [N]:
+
+### Step 1: Capture Screenshot
+node scripts/capture-screenshot.js "file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html" "projects/[project-name]/sessions/[session-id]/screenshots/iteration-X.png" 2000
+
+### Step 2: Analyze Screenshot
+Read the screenshot and evaluate:
+- P0-P2: Errors (crashes, bugs, layout issues)
+- P3-P5: Improvements (polish, mechanics, retention)
+
+Focus area: [auto / polish / mechanics / retention / user-specified]
+
+### Step 3: Make Improvements
+Edit preview/game.js to fix errors and add improvements (max 3 changes per iteration)
+
+### Step 4: Log Progress
+Print: "═══ Iteration X/[N] ═══" with summary of changes
+
+### Step 5: Continue
+Repeat until all [N] iterations complete
+
+## Improvement Priorities
+| P0 | Critical Errors | Blank screen, crashes, no touch |
+| P1 | Functional Bugs | Score wrong, collision broken |
+| P2 | Visual Issues | Safe area violations, clipping |
+| P3 | Polish & Juice | Animations, particles, shake |
+| P4 | Mechanics | Power-ups, combos, obstacles |
+| P5 | Retention | Rewards, difficulty, hooks |
+
+## Quality Standards
+- 60 FPS target
+- Safe areas: top 162px, bottom 102px (at 3x)
+- Every interaction feels satisfying
+- Always find something to improve
+
+## When Done
+1. Copy final game: cp preview/game.js projects/[project-name]/game.js
+2. Print completion summary with all improvements made
+3. Print test URL: file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html
+4. Open preview: explorer.exe "$(wslpath -w /home/wsley/Coding/GameSkillsFrameWork/preview/index.html)"
+5. Exit
+```
+
+---
+
+### Phase 4: Wait for Completion
+
+After spawning the loop runner, the orchestrator waits.
+
+The sub-agent will:
+- Run all iterations autonomously
+- Print progress for each iteration
+- Exit when complete
+
+**You (the orchestrator) just wait for the bash command to return.**
+
+When it returns, proceed to Phase 5.
 
 ### Phase 5: Completion
 
-When loop ends (max iterations reached):
+**The sub-agent handles all completion tasks automatically:**
+- Saves game to project folder
+- Prints completion summary
+- Opens preview in browser
+- Displays test URL
 
-1. **Save Game to Project Folder (REQUIRED)**
+**When the bash command returns, the orchestrator (you) should:**
 
-   ```bash
-   # Copy the final game.js to the project folder
-   cp preview/game.js projects/[project-name]/game.js
+1. Confirm to the user that the loop completed
+2. If the sub-agent output isn't visible, print the test URL:
 
-   # Copy final screenshot
-   cp [latest-screenshot] projects/[project-name]/screenshots/latest.png
-   ```
+```
+═══════════════════════════════════════════════════════════════
 
-2. **Update Project Metadata**
+GAME COMPLETE: [project-name]
 
-   Update `projects/[project-name]/project.json`:
-   ```json
-   {
-     "lastModified": "[ISO timestamp]",
-     "totalIterations": [previous + this session],
-     "totalSessions": [previous + 1],
-     "status": "in-development"
-   }
-   ```
+► TEST YOUR GAME:
+file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html
 
-3. **Finalize Session**
+To continue improving: run /ralph → Continue Project
 
-   Update `projects/[project-name]/sessions/[session-id]/session.json`:
-   ```json
-   {
-     "status": "completed",
-     "completedAt": "[ISO timestamp]",
-     "finalIterations": [N],
-     "improvements": [...],
-     "errorsFixed": [...]
-   }
-   ```
-
-4. **Generate Summary**
-   - Total iterations used
-   - Issues found and fixed
-   - Improvements made by category (P3/P4/P5)
-   - Patches created
-   - Final quality gate status
-
-5. **Update Patches**
-   - Add any new problem→solution pairs
-   - Update patch statistics
-
-6. **Present Results**
-   - Show final screenshot
-   - List improvements made this session
-   - Provide next steps
-
-7. **Launch Preview for User Testing (REQUIRED)**
-
-   **After completion, ALWAYS open the game in the user's browser so they can test it.**
-
-   Use Bash to run:
-   ```bash
-   explorer.exe "$(wslpath -w /home/wsley/Coding/GameSkillsFrameWork/preview/index.html)"
-   ```
-
-   This opens the preview in the Windows browser from WSL.
-
-   Note: The command may return exit code 1 but still work - that's expected on WSL.
-
-8. **Display Clickable Test Link (REQUIRED)**
-
-   **ALWAYS output the test URL as a clickable link for the user.**
-
-   Print this EXACT format (the link should be clickable in the terminal):
-
-   ```
-   ═══════════════════════════════════════════════════════════════
-
-   GAME COMPLETE: [project-name]
-
-   Iterations: [N]/[N]
-   Improvements: [X] enhancements made
-
-   ► TEST YOUR GAME:
-   file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html
-
-   ► Windows path (if above doesn't work):
-   \\wsl.localhost\Ubuntu\home\wsley\Coding\GameSkillsFrameWork\preview\index.html
-
-   ► Project saved to:
-   projects/[project-name]/
-
-   To continue improving: run /ralph → Continue Project → [project-name]
-
-   ═══════════════════════════════════════════════════════════════
-   ```
-
-   The `file:///` URL should be clickable in most terminals.
+═══════════════════════════════════════════════════════════════
+```
 
 ---
 

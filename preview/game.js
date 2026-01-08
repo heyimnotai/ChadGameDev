@@ -31,6 +31,7 @@ class BlockBlast {
         this.highScore = 0;
         this.gameOver = false;
         this.grid = this.createEmptyGrid();
+        this.comboCount = 0; // Track consecutive line clears
 
         // Block colors
         this.colors = [
@@ -79,6 +80,19 @@ class BlockBlast {
         // Shadow and ghost preview elements
         this.shadowNode = null;
         this.ghostCells = [];
+
+        // Screen shake state
+        this.shakeOffset = new Vector2(0, 0);
+        this.shakeIntensity = 0;
+        this.shakeDuration = 0;
+        this.shakeElapsed = 0;
+
+        // Floating score labels
+        this.floatingLabels = [];
+
+        // Combo UI elements
+        this.comboLabel = null;
+        this.gridGlow = null;
 
         // Create scene
         this.scene = new Scene({ width: this.width, height: this.height });
@@ -154,6 +168,15 @@ class BlockBlast {
         this.highScoreLabel.position = new Vector2(this.width / 2, this.safeTop + 240);
         this.scene.addChild(this.highScoreLabel);
 
+        // Combo label (hidden initially)
+        this.comboLabel = new LabelNode('');
+        this.comboLabel.fontSize = 48;
+        this.comboLabel.fontColor = Color.yellow;
+        this.comboLabel.position = new Vector2(this.width / 2, this.safeTop + 210);
+        this.comboLabel.isHidden = true;
+        this.comboLabel.zPosition = 20;
+        this.scene.addChild(this.comboLabel);
+
         // Game over label (hidden initially)
         this.gameOverLabel = new LabelNode('GAME OVER');
         this.gameOverLabel.fontSize = 96;
@@ -174,6 +197,19 @@ class BlockBlast {
     }
 
     createGrid() {
+        // Grid glow (for combo feedback) - positioned behind the grid background
+        this.gridGlow = new SpriteNode(Color.yellow.withOpacity(0), {
+            width: this.gridWidth + this.gridPadding * 2 + 20,
+            height: this.gridHeight + this.gridPadding * 2 + 20
+        });
+        this.gridGlow.cornerRadius = 32;
+        this.gridGlow.position = new Vector2(
+            this.gridX + this.gridWidth / 2,
+            this.gridY + this.gridHeight / 2
+        );
+        this.gridGlow.zPosition = -1;
+        this.scene.addChild(this.gridGlow);
+
         // Grid background
         const gridBg = new SpriteNode(new Color(0.12, 0.12, 0.18), {
             width: this.gridWidth + this.gridPadding * 2,
@@ -428,8 +464,18 @@ class BlockBlast {
         // Add score for placing
         this.addScore(shape.length * 10);
 
-        // Check for completed lines
-        this.checkAndClearLines();
+        // Check for completed lines and update combo
+        const linesCleared = this.checkAndClearLines();
+        if (linesCleared) {
+            this.comboCount++;
+            this.updateComboUI();
+        } else {
+            // Reset combo when no lines cleared
+            if (this.comboCount > 0) {
+                this.hideComboUI();
+            }
+            this.comboCount = 0;
+        }
 
         // Check if we need new blocks
         const allPlaced = this.blockSlots.every(s => s.placed);
@@ -487,23 +533,70 @@ class BlockBlast {
         }
 
         if (cellsToClear.size > 0) {
-            // Score based on lines cleared
+            // Score based on lines cleared with combo multiplier
             const linesCleared = rowsToClear.length + colsToClear.length;
             const bonus = linesCleared > 1 ? linesCleared * 50 : 0;
-            this.addScore(cellsToClear.size * 20 + bonus);
+            const baseScore = cellsToClear.size * 20 + bonus;
+            // Combo multiplier: comboCount will be incremented after this, so next combo is comboCount + 1
+            const comboMultiplier = Math.max(1, this.comboCount + 1);
+            const scoreGained = baseScore * comboMultiplier;
+            this.addScore(scoreGained);
+
+            // Screen shake on line clear - intensity scales with lines cleared
+            const shakeIntensity = 6 + linesCleared * 2; // 6-10px based on lines
+            this.screenShake(Math.min(shakeIntensity, 10), 250);
+
+            // Collect colors from cells being cleared for particle colors
+            const clearedColors = [];
+            for (const key of cellsToClear) {
+                const [x, y] = key.split(',').map(Number);
+                const color = this.grid[y][x];
+                if (color && !clearedColors.includes(color)) {
+                    clearedColors.push(color);
+                }
+            }
+
+            // Calculate center of cleared cells for floating score
+            let centerX = 0, centerY = 0;
 
             // Clear cells
             for (const key of cellsToClear) {
                 const [x, y] = key.split(',').map(Number);
+                const cellColor = this.grid[y][x];
                 this.grid[y][x] = null;
 
-                // Particles at cleared cell
-                this.particles.position = new Vector2(
-                    this.gridX + x * this.cellSize + this.cellSize / 2,
-                    this.gridY + y * this.cellSize + this.cellSize / 2
-                );
-                this.particles.burst(5);
+                const cellCenterX = this.gridX + x * this.cellSize + this.cellSize / 2;
+                const cellCenterY = this.gridY + y * this.cellSize + this.cellSize / 2;
+                centerX += cellCenterX;
+                centerY += cellCenterY;
+
+                // Enhanced particles at cleared cell
+                // Burst 8-10 particles per cell with varied colors and sizes
+                const particleCount = 8 + Math.floor(Math.random() * 3); // 8-10 particles
+                this.particles.position = new Vector2(cellCenterX, cellCenterY);
+
+                // Use the color of the cell being cleared, or pick random from cleared colors
+                const particleColor = cellColor || (clearedColors.length > 0
+                    ? clearedColors[Math.floor(Math.random() * clearedColors.length)]
+                    : Color.yellow);
+
+                // Temporarily set particle properties for variety
+                const originalSize = this.particles.particleSize;
+                for (let i = 0; i < particleCount; i++) {
+                    // Randomize particle size (14-22px)
+                    this.particles.particleSize = 14 + Math.random() * 8;
+                    this.particles.particleColor = particleColor;
+                    this.particles.burst(1);
+                }
+                this.particles.particleSize = originalSize;
             }
+
+            // Create floating score text at center of cleared area
+            centerX /= cellsToClear.size;
+            centerY /= cellsToClear.size;
+            // Show multiplier in floating text if combo is active
+            const floatingText = comboMultiplier > 1 ? `+${scoreGained} x${comboMultiplier}` : `+${scoreGained}`;
+            this.createFloatingScore(floatingText, new Vector2(centerX, centerY));
 
             // Remove visual blocks
             for (let i = this.placedBlocks.length - 1; i >= 0; i--) {
@@ -520,7 +613,9 @@ class BlockBlast {
             }
 
             HapticFeedback.notification('success');
+            return true; // Lines were cleared
         }
+        return false; // No lines cleared
     }
 
     checkGameOver() {
@@ -577,6 +672,163 @@ class BlockBlast {
         this.scene.run(this.scoreLabel, pop);
     }
 
+    /**
+     * Get combo color based on combo level
+     */
+    getComboColor(comboLevel) {
+        if (comboLevel >= 4) {
+            // Rainbow effect for 4x+ - cycle through colors
+            const colors = [Color.red, new Color(1, 0.5, 0), Color.yellow, Color.green, Color.cyan, Color.purple];
+            return colors[Math.floor(Date.now() / 200) % colors.length];
+        } else if (comboLevel === 3) {
+            return new Color(1, 0.5, 0); // Orange
+        } else {
+            return Color.yellow;
+        }
+    }
+
+    /**
+     * Update combo UI when combo increases
+     */
+    updateComboUI() {
+        const comboLevel = this.comboCount + 1; // Will be incremented after checkAndClearLines
+
+        if (comboLevel >= 2) {
+            // Show combo label
+            this.comboLabel.isHidden = false;
+            this.comboLabel.text = `X${comboLevel} COMBO!`;
+
+            // Set color based on combo level
+            const comboColor = this.getComboColor(comboLevel);
+            this.comboLabel.fontColor = comboColor;
+
+            // Scale pop animation
+            this.comboLabel.scale = new Vector2(0.5, 0.5);
+            const popAnim = Action.sequence([
+                Action.scaleTo(1.3, 100),
+                Action.scaleTo(1, 150)
+            ]);
+            this.scene.run(this.comboLabel, popAnim);
+
+            // Update grid glow
+            this.updateGridGlow(comboColor);
+        }
+    }
+
+    /**
+     * Hide combo UI when combo breaks
+     */
+    hideComboUI() {
+        // Fade out combo label
+        const fadeOut = Action.fadeOut(300);
+        this.scene.run(this.comboLabel, fadeOut);
+        setTimeout(() => {
+            this.comboLabel.isHidden = true;
+            this.comboLabel.alpha = 1;
+        }, 300);
+
+        // Fade out grid glow
+        this.hideGridGlow();
+    }
+
+    /**
+     * Update grid glow color and visibility
+     */
+    updateGridGlow(color) {
+        if (this.gridGlow) {
+            this.gridGlow.color = color.withOpacity(0.4);
+            // Pulse animation
+            const pulse = Action.sequence([
+                Action.fadeIn(150),
+                Action.fadeTo(0.6, 200)
+            ]);
+            this.scene.run(this.gridGlow, pulse);
+        }
+    }
+
+    /**
+     * Hide the grid glow
+     */
+    hideGridGlow() {
+        if (this.gridGlow) {
+            const fadeOut = Action.fadeOut(300);
+            this.scene.run(this.gridGlow, fadeOut);
+        }
+    }
+
+    /**
+     * Screen shake effect with sinusoidal decay
+     * @param {number} intensity - Shake intensity in pixels (5-8 recommended)
+     * @param {number} duration - Duration in milliseconds (200-300 recommended)
+     */
+    screenShake(intensity, duration) {
+        this.shakeIntensity = intensity;
+        this.shakeDuration = duration;
+        this.shakeElapsed = 0;
+    }
+
+    /**
+     * Create floating score text that animates upward and fades out
+     * @param {string} text - Text to display (e.g., "+100")
+     * @param {Vector2} position - Starting position
+     */
+    createFloatingScore(text, position) {
+        const label = new LabelNode(text);
+        label.fontSize = 60;
+        label.fontColor = Color.white;
+        label.position = new Vector2(position.x, position.y);
+        label.zPosition = 90;
+        this.scene.addChild(label);
+
+        // Store for cleanup
+        this.floatingLabels.push({
+            node: label,
+            startY: position.y,
+            elapsed: 0,
+            duration: 600
+        });
+    }
+
+    updateScreenShake(deltaTime) {
+        if (this.shakeElapsed < this.shakeDuration) {
+            this.shakeElapsed += deltaTime;
+            const progress = this.shakeElapsed / this.shakeDuration;
+            // Ease out decay
+            const decay = 1 - progress * progress;
+            // Sinusoidal shake
+            const frequency = 30; // Shake frequency
+            const offsetX = Math.sin(this.shakeElapsed * frequency / 100) * this.shakeIntensity * decay;
+            const offsetY = Math.cos(this.shakeElapsed * frequency / 100) * this.shakeIntensity * decay;
+            this.shakeOffset = new Vector2(offsetX, offsetY);
+        } else {
+            this.shakeOffset = new Vector2(0, 0);
+        }
+    }
+
+    updateFloatingLabels(deltaTime) {
+        for (let i = this.floatingLabels.length - 1; i >= 0; i--) {
+            const fl = this.floatingLabels[i];
+            fl.elapsed += deltaTime;
+            const progress = fl.elapsed / fl.duration;
+
+            if (progress >= 1) {
+                // Remove completed label
+                fl.node.removeFromParent();
+                this.floatingLabels.splice(i, 1);
+            } else {
+                // Ease out movement and fade
+                const easeOut = 1 - (1 - progress) * (1 - progress);
+                // Move up ~100px
+                fl.node.position = new Vector2(
+                    fl.node.position.x,
+                    fl.startY - 100 * easeOut
+                );
+                // Fade out
+                fl.node.alpha = 1 - easeOut;
+            }
+        }
+    }
+
     handleTouch(type, x, y) {
         if (this.gameOver) {
             if (type === 'began') {
@@ -602,14 +854,41 @@ class BlockBlast {
                     slot.node.scale = new Vector2(1.2, 1.2);
                     slot.node.zPosition = 50;
 
+                    // Create and add drop shadow
+                    this.shadowNode = this.createShadow(slot);
+                    this.shadowNode.scale = new Vector2(1.2, 1.2);
+                    this.shadowNode.zPosition = 49; // Just below the block
+                    // Offset shadow down and right
+                    this.shadowNode.position = slot.node.position.add(new Vector2(15, 15));
+                    this.scene.addChild(this.shadowNode);
+
                     HapticFeedback.selection();
                     break;
                 }
             }
         } else if (type === 'moved' && this.selectedBlock) {
             // Move block with touch
-            this.selectedBlock.node.position = touchPoint.add(this.dragOffset);
+            const newPos = touchPoint.add(this.dragOffset);
+            this.selectedBlock.node.position = newPos;
+
+            // Update shadow position (offset down and right)
+            if (this.shadowNode) {
+                this.shadowNode.position = newPos.add(new Vector2(15, 15));
+            }
+
+            // Update ghost preview
+            const gridPos = this.getGridPosition(newPos.x, newPos.y);
+            this.updateGhostPreview(this.selectedBlock, gridPos.x, gridPos.y);
         } else if (type === 'ended' && this.selectedBlock) {
+            // Clean up shadow
+            if (this.shadowNode) {
+                this.shadowNode.removeFromParent();
+                this.shadowNode = null;
+            }
+
+            // Clean up ghost cells
+            this.clearGhostCells();
+
             // Try to place block
             const gridPos = this.getGridPosition(
                 this.selectedBlock.node.position.x,
@@ -635,10 +914,16 @@ class BlockBlast {
     update(deltaTime) {
         this.scene.update(deltaTime);
         this.particles.update(deltaTime);
+        this.updateScreenShake(deltaTime);
+        this.updateFloatingLabels(deltaTime);
     }
 
     render(ctx, width, height) {
+        // Apply screen shake offset
+        ctx.save();
+        ctx.translate(this.shakeOffset.x, this.shakeOffset.y);
         this.scene.render(ctx, width, height);
+        ctx.restore();
     }
 
     getScore() {
@@ -655,10 +940,15 @@ class BlockBlast {
         this.scoreLabel.text = '0';
         this.gameOver = false;
         this.grid = this.createEmptyGrid();
+        this.comboCount = 0;
 
         // Hide game over UI
         this.gameOverLabel.isHidden = true;
         this.restartLabel.isHidden = true;
+
+        // Hide combo UI
+        this.comboLabel.isHidden = true;
+        this.hideGridGlow();
 
         // Clear placed blocks
         for (const block of this.placedBlocks) {
