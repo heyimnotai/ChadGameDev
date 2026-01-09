@@ -1255,25 +1255,330 @@ Edit `expo-games/apps/[project-name]/App.tsx` (max 3 changes per iteration)
 **Track each change** - you will test each one.
 **Hot reload** applies changes to both Simulator and user's device automatically.
 
-#### Step 5: TEST EACH Feature (MANDATORY - PER FEATURE)
-**Test EVERY feature you changed. Not once per iteration - ONCE PER FEATURE.**
+#### Step 5: INTERACTIVE TESTING (MANDATORY)
 
-**Use XcodeBuildMCP for iOS Simulator screenshots:**
+**Don't just screenshot - PLAY the game to reach and verify features.**
+
+### Test Plan Creation
+
+**Before testing, create a test plan for each feature:**
+
+```json
+{
+  "feature": "Combo multiplier on rapid taps",
+  "testPlan": {
+    "setup": "Start new game, wait for first enemy spawn",
+    "steps": [
+      {"action": "tap", "target": "enemy 1", "x": 200, "y": 400},
+      {"action": "wait", "duration": 100},
+      {"action": "tap", "target": "enemy 2", "x": 250, "y": 350},
+      {"action": "wait", "duration": 100},
+      {"action": "tap", "target": "enemy 3", "x": 180, "y": 380},
+      {"action": "screenshot", "name": "combo-active"},
+      {"action": "verify", "check": "combo multiplier shows 3x"}
+    ],
+    "expectedResult": "Combo counter visible, score multiplied",
+    "edgeCases": [
+      "What if taps are too slow (>500ms)?",
+      "What if player misses mid-combo?",
+      "Does combo reset on game over?"
+    ]
+  }
+}
+```
+
+### Interactive Test Execution
+
+**Browser Mode - Use Playwright for interaction:**
+```javascript
+// Navigate to game
+mcp__playwright__browser_navigate({ url: "http://localhost:8081" })
+
+// Wait for game to load
+mcp__playwright__browser_wait_for({ text: "TAP TO START" })
+
+// Start game
+mcp__playwright__browser_click({ element: "start button", ref: "start-btn" })
+
+// Execute test sequence
+mcp__playwright__browser_click({ element: "enemy", ref: "enemy-1" })
+mcp__playwright__browser_wait_for({ time: 0.1 })
+mcp__playwright__browser_click({ element: "enemy", ref: "enemy-2" })
+
+// Capture result
+mcp__playwright__browser_take_screenshot({ filename: "combo-test.png" })
+
+// Check console for errors
+mcp__playwright__browser_console_messages({ level: "error" })
+```
+
+**iOS Simulator Mode - Use XcodeBuildMCP:**
+```javascript
+// Tap sequence
+mcp__XcodeBuildMCP__tap({ x: 200, y: 400 })
+// Wait
+// (use setTimeout or similar)
+mcp__XcodeBuildMCP__tap({ x: 250, y: 350 })
+
+// Swipe gesture
+mcp__XcodeBuildMCP__swipe({
+  startX: 200, startY: 500,
+  endX: 200, endY: 200,
+  duration: 300
+})
+
+// Capture result
+mcp__XcodeBuildMCP__screenshot()
+
+// Check logs
+mcp__XcodeBuildMCP__capture_logs()
+```
+
+### Test Depth Levels
+
+**Level 1 - Smoke Test (every iteration):**
+- Game loads without errors
+- Basic tap responds
+- No crashes
+
+**Level 2 - Feature Test (after implementing feature):**
+- Navigate to feature
+- Trigger feature
+- Verify expected behavior
+- Check edge cases
+
+**Level 3 - Regression Test (every 5 iterations):**
+- Re-run all previous feature tests
+- Verify nothing broke
+- Check performance hasn't degraded
+
+**Level 4 - Stress Test (before completion):**
+- Rapid inputs
+- Long play sessions (5+ minutes)
+- Memory leak detection
+- Battery/thermal check
+
+### State Verification
+
+**Don't just look - VERIFY state changes:**
 
 ```
-FOR EACH feature/change:
-  1. Identify what should be visible/working
-  2. Wait for hot reload (1-2 seconds)
-  3. Capture screenshot via iOS Simulator:
-     mcp__XcodeBuildMCP__screenshot
-  4. Analyze screenshots - Check: LOOKS good? FEELS right? WORKS correctly?
-  5. Record PASS/FAIL with evidence
+1. BEFORE state:
+   - Screenshot: score shows "0"
+   - Console: no errors
 
-  IF FAILED:
-    1. Add to known-issues.json with severity and evidence
-    2. Attempt fix
-    3. Re-test (hot reload applies immediately)
-    4. If still failing after 2 attempts, mark issue as "open" and continue
+2. ACTION:
+   - Tap coin at (200, 400)
+
+3. AFTER state:
+   - Screenshot: score shows "10"
+   - Console: "Coin collected, +10 points"
+   - Haptic: should have fired
+
+4. VERIFY:
+   - Score increased: YES ✓
+   - Animation played: YES ✓
+   - Sound played: (check audio system state)
+   - Haptic fired: (check haptic system state)
+```
+
+### Test Scenarios for Complex Features
+
+**Example: Power-up System Test**
+```
+Scenario: Shield power-up protects from one hit
+
+Setup:
+  1. Start game
+  2. Play until power-up spawns (may need to tap enemies to progress)
+  3. Navigate player to power-up
+
+Test Steps:
+  1. Screenshot BEFORE collecting power-up
+  2. Collect power-up (tap/move to it)
+  3. Screenshot AFTER - verify shield visual active
+  4. Get hit by enemy
+  5. Screenshot - verify shield absorbed hit, player alive
+  6. Get hit again
+  7. Screenshot - verify player takes damage (shield gone)
+
+Verify:
+  - Shield visual appears on collect
+  - Shield visual disappears after one hit
+  - Player survives first hit
+  - Player takes damage on second hit
+  - Audio/haptic feedback on shield break
+```
+
+### Console Log Analysis
+
+**After each test, check logs for:**
+```
+1. Errors (critical):
+   - "TypeError", "ReferenceError" = immediate fix
+   - "undefined is not" = state bug
+
+2. Warnings (investigate):
+   - Performance warnings
+   - Deprecation notices
+
+3. Game state logs:
+   - Verify expected events fired
+   - Check state transitions
+   - Confirm score/life updates
+```
+
+### Recording Test Results
+
+**Update test-results.json after each test:**
+```json
+{
+  "iteration": 15,
+  "testsRun": 8,
+  "passed": 7,
+  "failed": 1,
+  "tests": [
+    {
+      "feature": "Combo multiplier",
+      "result": "PASS",
+      "steps": 6,
+      "duration": "4.2s",
+      "evidence": "screenshots/iter-15-combo.png"
+    },
+    {
+      "feature": "Shield power-up",
+      "result": "FAIL",
+      "reason": "Shield visual doesn't appear",
+      "evidence": "screenshots/iter-15-shield-fail.png",
+      "addedToIssues": true
+    }
+  ]
+}
+```
+
+### Growing Test Suite
+
+**Maintain tests/test-suite.json - grows with the game:**
+
+```json
+{
+  "projectName": "my-game",
+  "testSuite": {
+    "smokeTests": [
+      {
+        "name": "Game loads",
+        "steps": [{"action": "wait", "text": "TAP TO START"}],
+        "runEvery": "iteration"
+      }
+    ],
+    "featureTests": [
+      {
+        "name": "Score increases on tap",
+        "addedInIteration": 3,
+        "steps": [
+          {"action": "screenshot", "name": "before"},
+          {"action": "tap", "x": 200, "y": 400},
+          {"action": "wait", "time": 0.5},
+          {"action": "screenshot", "name": "after"},
+          {"action": "verify", "check": "score changed"}
+        ],
+        "runEvery": "5 iterations"
+      }
+    ],
+    "regressionTests": [
+      {
+        "name": "All core mechanics",
+        "runEvery": "focus change"
+      }
+    ]
+  },
+  "lastFullRun": "2026-01-09T12:00:00Z",
+  "passRate": "94%"
+}
+```
+
+**When adding a feature, add its test to the suite.**
+
+### Playthrough Testing
+
+**For complex games, actually PLAY for extended periods:**
+
+```
+Playthrough Test (run before marking category as 90%+):
+
+Duration: 5 minutes of actual gameplay
+Method: Automated taps/swipes simulating real player
+
+1. START SESSION
+   - Screenshot initial state
+   - Note starting score/lives
+
+2. PLAY LOOP (repeat for 5 minutes):
+   - Take action appropriate to game state
+   - Every 30 seconds: screenshot + console check
+   - Track: score, lives, power-ups, game state
+
+3. END SESSION
+   - Screenshot final state
+   - Compare: score progression, did difficulty increase?
+   - Check: any crashes, errors, memory growth?
+
+4. ANALYZE
+   - Was it FUN? (subjective but important)
+   - Did difficulty feel right?
+   - Any frustrating moments?
+   - Performance stable throughout?
+```
+
+**Playthrough Recording:**
+```json
+{
+  "playthrough": {
+    "duration": "5:23",
+    "finalScore": 12450,
+    "livesLost": 3,
+    "powerUpsCollected": 7,
+    "screenshotsTaken": 12,
+    "errorsFound": 0,
+    "performanceIssues": ["slight stutter at 3:45 when 20+ enemies"],
+    "difficultyProgression": "good - ramped smoothly",
+    "funFactor": "7/10 - needs more juice on combo"
+  }
+}
+```
+
+### Why Testing Fails
+
+**Common issues and how to actually reach the feature:**
+
+| Can't Test Because | Solution |
+|-------------------|----------|
+| Feature requires high score | Add debug mode: start at score X |
+| Feature appears randomly | Seed RNG or force spawn in test |
+| Feature requires specific state | Create test-mode entry points |
+| Need to die to test game over | Add debug kill button |
+| Need time to pass | Add debug time skip |
+
+**Add test hooks to App.tsx:**
+```typescript
+// Only in development
+if (__DEV__) {
+  window.testHelpers = {
+    setScore: (n) => setScore(n),
+    spawnPowerUp: (type) => spawnPowerUp(type),
+    triggerGameOver: () => setGameState('gameOver'),
+    skipToWave: (n) => setWave(n),
+  };
+}
+```
+
+**Use test helpers in automated testing:**
+```javascript
+// In browser mode
+mcp__playwright__browser_evaluate({
+  function: "() => window.testHelpers.setScore(9990)"
+})
+// Now test what happens when score reaches 10000
 ```
 
 **Feature Testing Checklist (for each feature):**
