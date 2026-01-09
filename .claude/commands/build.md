@@ -1,5 +1,5 @@
 ---
-description: Build native iOS app using XcodeBuildMCP
+description: Build the current game for App Store submission using EAS Build
 allowed-tools:
   - Read
   - Write
@@ -7,123 +7,112 @@ allowed-tools:
   - Bash
   - Glob
   - Grep
-  - mcp__XcodeBuildMCP__build_sim_name_proj
-  - mcp__XcodeBuildMCP__build_sim_name_workspace
-  - mcp__XcodeBuildMCP__list_simulators
-  - mcp__XcodeBuildMCP__boot_simulator
-  - mcp__XcodeBuildMCP__get_build_settings
 ---
 
-# Build Command
+# Build for App Store
 
-Build the native iOS app using Xcode via XcodeBuildMCP.
+Build the current game for App Store submission using EAS Build.
 
 ## Usage
 
 ```
-/build [target] [--simulator name]
+/build
 ```
 
-## What This Command Does
+## What This Does
 
-1. **Locate** Xcode project or workspace
-2. **Select** target simulator
-3. **Build** the app for simulator
-4. **Report** build status and any errors
+1. Identifies the current game project from `expo-games/apps/`
+2. Verifies all required assets exist (icon, splash, app.json metadata)
+3. Runs `eas build --platform ios --profile production`
+4. Waits for build completion (~10-15 minutes)
+5. Provides download link for .ipa file
 
 ## Prerequisites
 
-- Xcode installed on macOS
-- Valid `.xcodeproj` or `.xcworkspace` file
-- XcodeBuildMCP server running
+- EAS CLI installed: `npm install -g eas-cli`
+- Logged into EAS: `eas login`
+- Apple Developer credentials configured: `eas credentials`
 
-## Steps to Execute
+## Build Profiles
 
-### Step 1: Find Project
+The default `eas.json` includes:
 
-Search for Xcode project files:
-```
-Glob: **/*.xcodeproj
-Glob: **/*.xcworkspace
-```
-
-### Step 2: List Available Simulators
-
-```
-mcp__XcodeBuildMCP__list_simulators
-```
-
-Select appropriate iPhone simulator (prefer iPhone 15).
-
-### Step 3: Boot Simulator (if needed)
-
-```
-mcp__XcodeBuildMCP__boot_simulator
-simulator_name: "iPhone 15"
+```json
+{
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal"
+    },
+    "production": {
+      "distribution": "store"
+    }
+  }
+}
 ```
 
-### Step 4: Build for Simulator
+## Steps
 
-For `.xcodeproj`:
-```
-mcp__XcodeBuildMCP__build_sim_name_proj
-project_path: "/path/to/Project.xcodeproj"
-scheme: "ProjectScheme"
-simulator_name: "iPhone 15"
-```
+### Step 1: Identify Project
 
-For `.xcworkspace`:
-```
-mcp__XcodeBuildMCP__build_sim_name_workspace
-workspace_path: "/path/to/Project.xcworkspace"
-scheme: "ProjectScheme"
-simulator_name: "iPhone 15"
+```bash
+# Find current game
+ls expo-games/apps/
 ```
 
-### Step 5: Report Results
+Ask user which game to build if multiple exist.
 
-If successful:
-```markdown
-## Build Successful ✅
+### Step 2: Verify Assets
 
-**Project**: MyGame.xcodeproj
-**Scheme**: MyGame
-**Simulator**: iPhone 15
-**Build Time**: 12.3s
+Check these files exist:
+- `expo-games/apps/[game]/assets/icon.png` (1024x1024)
+- `expo-games/apps/[game]/assets/splash.png`
+- `expo-games/apps/[game]/app.json` with valid bundleIdentifier
 
-App is ready to launch with `/test-ios`
+### Step 3: Run Build
+
+```bash
+cd expo-games/apps/[game]
+eas build --platform ios --profile production --non-interactive
 ```
 
-If failed:
-```markdown
-## Build Failed ❌
+### Step 4: Report Status
 
-**Error**: [error description]
-**File**: [file:line if applicable]
+```
+═══════════════════════════════════════════════════════════════
+█ BUILD STARTED
+═══════════════════════════════════════════════════════════════
 
-### Suggested Fix
-[Description of how to fix the issue]
+Game: [game-name]
+Platform: iOS
+Profile: production
+
+Build URL: https://expo.dev/accounts/[account]/builds/[id]
+
+The build typically takes 10-15 minutes.
+You'll receive a notification when complete.
+
+When ready, run /submit to publish to App Store Connect.
+═══════════════════════════════════════════════════════════════
 ```
 
-## Common Build Errors
+## Common Issues
 
-| Error | Cause | Fix |
-|-------|-------|-----|
-| No scheme found | Project misconfigured | Create/select scheme in Xcode |
-| Signing error | No valid team | Use automatic signing or set team |
-| Module not found | Missing dependency | Run `pod install` or add SPM package |
-| Syntax error | Code issue | Fix Swift syntax in referenced file |
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| Not logged in | EAS session expired | Run `eas login` |
+| Missing credentials | Apple creds not configured | Run `eas credentials` |
+| Invalid bundleIdentifier | Incorrect format in app.json | Use reverse domain (com.company.app) |
+| Missing icon | No 1024x1024 icon.png | Add proper icon to assets/ |
+| Build queue | High demand on EAS servers | Wait for queue position |
 
-## Build Settings
+## After Build Completes
 
-To inspect build settings:
-```
-mcp__XcodeBuildMCP__get_build_settings
-project_path: "/path/to/Project.xcodeproj"
-```
+Once the build finishes successfully:
 
-## Notes
-
-- First build may take longer (cold cache)
-- Incremental builds are enabled for faster iteration
-- Use `/test-ios` after successful build to launch app
+1. Download the .ipa from the build URL
+2. Run `/submit` to submit to App Store Connect
+3. Or install on device via TestFlight for testing
