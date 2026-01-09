@@ -2,8 +2,8 @@
   "name": "block-blast",
   "description": "Block Blast - Puzzle game where you place block shapes onto a grid to clear rows and columns",
   "created": "2026-01-07T21:50:00Z",
-  "lastModified": "2026-01-08T12:17:00Z",
-  "totalIterations": 15,
-  "totalSessions": 3,
+  "lastModified": "2026-01-08T17:46:00Z",
+  "totalIterations": 17,
+  "totalSessions": 4,
   "status": "in-development"
 }

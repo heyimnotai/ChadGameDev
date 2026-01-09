@@ -46,26 +46,39 @@ Games are developed using React Native + Expo, enabling native iOS development w
 | `/optimize` | Full Chad Loop optimization cycle |
 | `/push` | Commit and push to GitHub |
 
-## Dual Testing System
+## Testing Modes
 
-### AI Testing (Autonomous)
+Choose your testing mode based on your setup:
 
-AI develops and tests games using iOS Simulator:
+### Browser Mode (Recommended for Hotspot/Offline)
 
-1. Game runs in iOS Simulator on dev machine
-2. AI captures screenshots via XcodeBuildMCP
+Best when you don't have WiFi - works with hotspot or offline:
+
+1. Game runs in browser via Expo Web
+2. AI captures screenshots via Playwright MCP
 3. AI analyzes screenshots, makes code changes
-4. Expo hot reload applies changes instantly
-5. Repeat for N iterations until quality gates pass
+4. Hot reload applies changes instantly
+5. No network connection to phone needed
 
-### Human Testing (Expo Go)
+**Note:** Haptics won't work in browser, but all other features do.
 
-After AI completes development iterations:
+### iOS Simulator Mode
 
-1. AI displays QR code in terminal
-2. Scan with Expo Go app on physical device
+Native testing on your Mac:
+
+1. Game runs in iOS Simulator
+2. AI captures screenshots via XcodeBuildMCP
+3. Full native experience including haptics simulation
+4. Requires Xcode installed
+
+### Expo Go Mode
+
+Test on real phone (requires WiFi):
+
+1. Game runs on your phone via Expo Go app
+2. Scan QR code to connect
 3. Test haptics, audio, controls on real hardware
-4. Provide feedback or approve for submission
+4. AI uses iOS Simulator for screenshots
 
 ## MCP Tools
 

@@ -158,7 +158,23 @@ START LOOP (only NOW does AI processing begin)
 }
 ```
 
-**Question 3A: Iteration Count**
+**Question 3A: Testing Mode**
+```json
+{
+  "questions": [{
+    "question": "How do you want to test the game?",
+    "header": "Testing",
+    "multiSelect": false,
+    "options": [
+      {"label": "Browser", "description": "Test in browser (works offline/hotspot) - Recommended"},
+      {"label": "iOS Simulator", "description": "Native testing via Xcode simulator"},
+      {"label": "Expo Go", "description": "Test on phone (requires WiFi network)"}
+    ]
+  }]
+}
+```
+
+**Question 4A: Iteration Count**
 ```json
 {
   "questions": [{
@@ -245,7 +261,23 @@ Build from Phase 0 data:
 
 **For all other focus modes:**
 
-**Question 4B: Iteration Count**
+**Question 4B: Testing Mode**
+```json
+{
+  "questions": [{
+    "question": "How do you want to test the game?",
+    "header": "Testing",
+    "multiSelect": false,
+    "options": [
+      {"label": "Browser", "description": "Test in browser (works offline/hotspot) - Recommended"},
+      {"label": "iOS Simulator", "description": "Native testing via Xcode simulator"},
+      {"label": "Expo Go", "description": "Test on phone (requires WiFi network)"}
+    ]
+  }]
+}
+```
+
+**Question 5B: Iteration Count**
 ```json
 {
   "questions": [{
@@ -357,58 +389,82 @@ Then create `expo-games/apps/[project-name]/App.tsx`:
 - Implement: state machine, core loop, scoring, visual feedback, game over
 - Use React Native patterns with TypeScript
 
-### Step B2: Start Expo Dev Server
+### Step B2: Start Dev Server (Based on Testing Mode)
 
-Start the Expo development server in the background:
+**Browser Mode:**
+```bash
+cd expo-games/apps/[project-name] && npx expo start --web &
+```
+- Opens game in browser at http://localhost:8081
+- Use Playwright MCP for screenshots: `mcp__playwright__browser_navigate`, `mcp__playwright__browser_take_screenshot`
+- Works offline/hotspot - no network needed
+
+**iOS Simulator Mode:**
+```bash
+cd expo-games/apps/[project-name] && npx expo start &
+# Then boot simulator
+mcp__XcodeBuildMCP__boot_simulator
+```
+- Use XcodeBuildMCP for screenshots: `mcp__XcodeBuildMCP__screenshot`
+- Native performance testing
+
+**Expo Go Mode:**
 ```bash
 cd expo-games/apps/[project-name] && npx expo start --tunnel &
 ```
-
-Wait for the server to start and display the QR code URL.
+- Requires WiFi network connection
+- User scans QR code with Expo Go app
+- Use iOS Simulator for AI screenshots
 
 **Tell the user:**
 ```
 ═══════════════════════════════════════════════════════════════
-█ EXPO DEV SERVER STARTED
+█ DEV SERVER STARTED - [MODE] MODE
 ═══════════════════════════════════════════════════════════════
 
-► Scan QR code with Expo Go app to test on your device
+[Browser]: Game running at http://localhost:8081
+[iOS Simulator]: Simulator booted, app launching
+[Expo Go]: Scan QR code with Expo Go app
+
 ► Hot reload is enabled - changes appear automatically
 
 Starting AI optimization loop...
 ═══════════════════════════════════════════════════════════════
 ```
 
-### Step B3: Boot iOS Simulator for AI Testing
-
-```bash
-# Use XcodeBuildMCP to boot simulator
-mcp__XcodeBuildMCP__boot_simulator
-```
-
-The simulator provides AI-visible screenshots while Expo Go provides human testing.
-
 ### Step C: Run Improvement Loop
 
 For each iteration 1 to [N]:
 
-#### Step 1: Capture Screenshots via iOS Simulator
+#### Step 1: Capture Screenshots (Based on Testing Mode)
 
-Use XcodeBuildMCP to capture screenshots from the iOS Simulator:
+**Browser Mode - Use Playwright MCP:**
+```bash
+# Navigate to game (first time only)
+mcp__playwright__browser_navigate url="http://localhost:8081"
 
+# Capture screenshot
+mcp__playwright__browser_take_screenshot filename="projects/[name]/sessions/[session]/screenshots/iter-[X]-01.png"
+
+# Wait for game state changes, capture again
+mcp__playwright__browser_take_screenshot filename="projects/[name]/sessions/[session]/screenshots/iter-[X]-02.png"
+```
+
+**iOS Simulator Mode - Use XcodeBuildMCP:**
 ```bash
 # Capture initial state
 mcp__XcodeBuildMCP__screenshot
 # Save to: projects/[name]/sessions/[session]/screenshots/iter-[X]-01.png
 
 # Wait for game state changes, capture again
-# (Simulator shows live Expo app via hot reload)
 mcp__XcodeBuildMCP__screenshot
 # Save to: projects/[name]/sessions/[session]/screenshots/iter-[X]-02.png
 ```
 
-**Note:** The Expo dev server hot-reloads changes automatically. After editing App.tsx,
-the simulator updates within seconds, allowing rapid visual verification.
+**Expo Go Mode:** Use iOS Simulator for AI screenshots (same as Simulator mode).
+
+**Note:** Hot reload applies changes automatically in all modes. After editing App.tsx,
+the game updates within seconds, allowing rapid visual verification.
 
 #### Step 2: Analyze Screenshots
 Read EACH screenshot and evaluate:

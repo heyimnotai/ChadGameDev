@@ -458,6 +458,8 @@ class BlockBlast {
             }
         }
         this.blockSlots = [];
+        // Also clear selectedBlock to prevent any stale references
+        this.selectedBlock = null;
 
         // Spawn 3 new random blocks with staggered animation
         const slotY = this.gridY + this.gridHeight + 180;
@@ -720,9 +722,10 @@ class BlockBlast {
             this.scene.run(cell, scaleUp);
         }
 
-        // Remove the slot
-        slot.node.removeFromParent();
+        // Remove the slot - IMPORTANT: Mark as placed BEFORE removing from parent
+        // to prevent any race conditions with animation callbacks
         slot.placed = true;
+        slot.node.removeFromParent();
 
         // Hide onboarding hint on first block placement
         if (this.showHint) {
@@ -756,13 +759,20 @@ class BlockBlast {
         }
 
         // Check if we need new blocks
-        const allPlaced = this.blockSlots.every(s => s.placed);
+        const unplacedCount = this.blockSlots.filter(s => !s.placed).length;
+        const allPlaced = unplacedCount === 0;
+
         if (allPlaced) {
+            // Clear selectedBlock immediately to prevent stale references
+            this.selectedBlock = null;
             setTimeout(() => this.spawnNewBlocks(), 300);
         }
 
-        // Check for game over
-        this.checkGameOver();
+        // Check for game over ONLY if there are unplaced blocks
+        // (If all are placed, new blocks will spawn and we'll check then)
+        if (unplacedCount > 0) {
+            this.checkGameOver();
+        }
 
         HapticFeedback.impact('medium');
     }
@@ -1372,7 +1382,9 @@ class BlockBlast {
         if (type === 'began') {
             // Check if touching a block slot
             for (const slot of this.blockSlots) {
+                // Skip placed slots or slots without a valid node
                 if (slot.placed) continue;
+                if (!slot.node || !slot.node.position) continue;
 
                 // Simple hit test
                 const dist = touchPoint.distance(slot.node.position);
@@ -1502,7 +1514,9 @@ class BlockBlast {
     updateBlockSlotIdle(deltaTime) {
         for (let i = 0; i < this.blockSlots.length; i++) {
             const slot = this.blockSlots[i];
+            // Skip placed, selected, or invalid slots
             if (slot.placed || slot === this.selectedBlock) continue;
+            if (!slot.node || !slot.originalPosition) continue;
 
             // Each block has a different phase offset
             const phase = this.ambientTime * 0.003 + i * (Math.PI * 2 / 3);
@@ -1512,12 +1526,10 @@ class BlockBlast {
             const bobY = Math.sin(phase) * bobAmount;
 
             // Apply to position (relative to original)
-            if (slot.originalPosition) {
-                slot.node.position = new Vector2(
-                    slot.originalPosition.x,
-                    slot.originalPosition.y + bobY
-                );
-            }
+            slot.node.position = new Vector2(
+                slot.originalPosition.x,
+                slot.originalPosition.y + bobY
+            );
         }
     }
 
