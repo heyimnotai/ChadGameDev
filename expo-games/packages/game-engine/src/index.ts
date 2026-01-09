@@ -37,3 +37,7 @@ export type {
   TouchEventType,
   GestureEvent,
 } from './systems';
+
+// Engine
+export { Engine } from './Engine';
+export type { GameState, UpdateFunction } from './Engine';
