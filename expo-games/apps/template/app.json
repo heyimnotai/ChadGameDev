@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "Game Template",
+    "slug": "game-template",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yourcompany.gametemplate",
+      "requireFullScreen": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-av",
+      "expo-haptics"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "scheme": "gametemplate"
+  }
+}
