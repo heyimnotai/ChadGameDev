@@ -598,13 +598,40 @@
 
         // Reset button
         document.getElementById('btnReset').addEventListener('click', () => {
-            if (window.gameInstance && window.gameInstance.reset) {
-                window.gameInstance.reset();
+            resetGameState();
+        });
+
+        // Complete game state reset - used when switching to a new game
+        function resetGameState() {
+            // Call cleanup on old game instance if it exists
+            if (window.gameInstance) {
+                if (window.gameInstance.cleanup) {
+                    window.gameInstance.cleanup();
+                }
+                if (window.gameInstance.destroy) {
+                    window.gameInstance.destroy();
+                }
             }
+
+            // Clear the game instance
+            window.gameInstance = null;
+
+            // Reset debug displays
             document.getElementById('debugScore').textContent = '0';
             document.getElementById('debugObjects').textContent = '0';
-            log('State reset', 'warn');
-        });
+            document.getElementById('debugState').textContent = 'running';
+            document.getElementById('debugTouch').textContent = '-';
+
+            // Clear the canvas
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+            // Reset pause state
+            isPaused = false;
+            togglePause.checked = false;
+
+            log('Game state reset', 'warn');
+        }
 
         // Logging system
         const logOutput = document.getElementById('logOutput');
@@ -676,6 +703,7 @@
             ctx,
             log,
             screenToCanvas,
+            resetGameState,
             SCREEN_WIDTH,
             SCREEN_HEIGHT,
             SCALE

@@ -1,7 +1,7 @@
 # Visual Chad Loop - Autonomous Game Development
 
-> **⚠️ CRITICAL: NEVER use MCP Playwright tools (mcp__playwright__*) in this environment.**
-> They don't work in Docker. Use ONLY: `node scripts/capture-screenshot.js`
+> **Expo-based workflow: Games are built as React Native apps with hot-reload support.**
+> Screenshots are captured via iOS Simulator using XcodeBuildMCP tools.
 
 Run the Visual Chad Loop to autonomously develop and polish games through iterative visual feedback.
 
@@ -60,14 +60,19 @@ START LOOP (only NOW does AI processing begin)
 
 ## Technical Reference
 
-**CRITICAL - Browser Handling (Docker/WSL):**
-- Screenshots: `node scripts/capture-screenshot.js <url> <output> [wait-ms]`
-- User preview: `node scripts/preview-server.js 8080` (then open http://localhost:8080)
-- **NEVER use MCP Playwright tools** (mcp__playwright__*) - they don't work in Docker
-- **NEVER use file:// URLs with MCP tools** - only with the bash script
-- For ALL screenshot/browser needs, use ONLY: `node scripts/capture-screenshot.js`
+**Expo + iOS Simulator Workflow:**
+- **Project location**: `expo-games/apps/[game-name]/`
+- **Game code**: `expo-games/apps/[game-name]/App.tsx` (main game file)
+- **Dev server**: `npx expo start --tunnel` (provides QR code for Expo Go)
+- **Screenshots**: Use `mcp__XcodeBuildMCP__screenshot` via iOS Simulator
 
-**If screenshots fail:** See Troubleshooting section at bottom.
+**Simulator Management:**
+- Boot simulator: `mcp__XcodeBuildMCP__boot_simulator`
+- List simulators: `mcp__XcodeBuildMCP__list_simulators`
+- Take screenshot: `mcp__XcodeBuildMCP__screenshot`
+- Capture logs: `mcp__XcodeBuildMCP__capture_logs`
+
+**If screenshots fail:** Ensure iOS Simulator is booted and app is running.
 
 ---
 
@@ -80,9 +85,10 @@ START LOOP (only NOW does AI processing begin)
 ```
 1. Glob("projects/*/project.json")
 2. Read each project.json found
-3. Store: name, totalIterations for each
+3. Store: name, totalIterations, expoPath for each
 4. Read projects/[name]/known-issues.json if it exists
 5. Note any open issues for the "Continue Project" flow
+6. Verify expo-games/apps/[name] exists for each project
 ```
 
 **NO output. NO thinking. Just read the files and proceed to questions.**
@@ -288,8 +294,8 @@ Build from Phase 0 data:
 **Invoke skills with the Skill tool when you need specialized guidance.**
 
 **Chad Skills:**
-- `game-preview` - HTML5 preview generation
-- `visual-testing` - Screenshot analysis techniques
+- `game-preview` - Expo game preview generation
+- `visual-testing` - Screenshot analysis techniques (iOS Simulator)
 - `chad-optimizer` - Optimization loop methodology
 - `self-prompter` - Self-prompting patterns
 
@@ -317,8 +323,15 @@ After user selects "New Game" and provides details:
 
 ### Step A: Setup Project
 ```bash
+# Create session tracking directory
 mkdir -p projects/[project-name]/sessions/session-$(date +%Y%m%d-%H%M%S)/screenshots
+
+# Copy Expo template to create new game
+cp -r expo-games/apps/template expo-games/apps/[project-name]
 ```
+
+Update `expo-games/apps/[project-name]/package.json`:
+- Change `"name"` to `"[project-name]"`
 
 Create `projects/[project-name]/project.json`:
 ```json
@@ -329,7 +342,8 @@ Create `projects/[project-name]/project.json`:
   "lastModified": "[timestamp]",
   "totalIterations": 0,
   "totalSessions": 0,
-  "status": "in-development"
+  "status": "in-development",
+  "expoPath": "expo-games/apps/[project-name]"
 }
 ```
 
@@ -337,22 +351,64 @@ Create `projects/[project-name]/project.json`:
 
 **FIRST: Invoke the `core-loop-architect` skill** to design the game properly.
 
-Then create `preview/game.js`:
-- Use game-renderer.js abstractions (SpriteNode, ShapeNode, LabelNode, Action, Scene, ParticleEmitter)
-- Canvas: 1179x2556 at 3x scale (393x852 logical)
-- Safe areas: top 162px, bottom 102px
+Then create `expo-games/apps/[project-name]/App.tsx`:
+- Use the game-engine package: `import { Engine, createSprite, createText, Vector2, Color, TouchSystem, HapticManager } from '@expo-games/game-engine';`
+- Screen dimensions: Use SafeAreaProvider for proper safe areas
 - Implement: state machine, core loop, scoring, visual feedback, game over
+- Use React Native patterns with TypeScript
+
+### Step B2: Start Expo Dev Server
+
+Start the Expo development server in the background:
+```bash
+cd expo-games/apps/[project-name] && npx expo start --tunnel &
+```
+
+Wait for the server to start and display the QR code URL.
+
+**Tell the user:**
+```
+═══════════════════════════════════════════════════════════════
+█ EXPO DEV SERVER STARTED
+═══════════════════════════════════════════════════════════════
+
+► Scan QR code with Expo Go app to test on your device
+► Hot reload is enabled - changes appear automatically
+
+Starting AI optimization loop...
+═══════════════════════════════════════════════════════════════
+```
+
+### Step B3: Boot iOS Simulator for AI Testing
+
+```bash
+# Use XcodeBuildMCP to boot simulator
+mcp__XcodeBuildMCP__boot_simulator
+```
+
+The simulator provides AI-visible screenshots while Expo Go provides human testing.
 
 ### Step C: Run Improvement Loop
 
 For each iteration 1 to [N]:
 
-#### Step 1: Capture Screenshots
+#### Step 1: Capture Screenshots via iOS Simulator
+
+Use XcodeBuildMCP to capture screenshots from the iOS Simulator:
+
 ```bash
-node scripts/capture-screenshot.js "file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html" "projects/[name]/sessions/[session]/screenshots/iter-[X]-01.png" 500
-node scripts/capture-screenshot.js "file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html" "projects/[name]/sessions/[session]/screenshots/iter-[X]-02.png" 2000
-node scripts/capture-screenshot.js "file:///home/wsley/Coding/GameSkillsFrameWork/preview/index.html" "projects/[name]/sessions/[session]/screenshots/iter-[X]-03.png" 4000
+# Capture initial state
+mcp__XcodeBuildMCP__screenshot
+# Save to: projects/[name]/sessions/[session]/screenshots/iter-[X]-01.png
+
+# Wait for game state changes, capture again
+# (Simulator shows live Expo app via hot reload)
+mcp__XcodeBuildMCP__screenshot
+# Save to: projects/[name]/sessions/[session]/screenshots/iter-[X]-02.png
 ```
+
+**Note:** The Expo dev server hot-reloads changes automatically. After editing App.tsx,
+the simulator updates within seconds, allowing rapid visual verification.
 
 #### Step 2: Analyze Screenshots
 Read EACH screenshot and evaluate:
@@ -366,24 +422,24 @@ Read EACH screenshot and evaluate:
 - Improving retention? → Invoke `retention-engineer` skill
 
 #### Step 4: Make Improvements
-Edit preview/game.js (max 3 changes per iteration)
+Edit `expo-games/apps/[project-name]/App.tsx` (max 3 changes per iteration)
 
 **Track each change** - you will test each one.
+**Hot reload:** Changes appear automatically in both Simulator and Expo Go.
 
 #### Step 5: TEST EACH Feature (MANDATORY)
 **Test EVERY feature you changed. Not once per iteration - ONCE PER FEATURE.**
 
-**IMPORTANT: Use ONLY the bash screenshot script. NEVER use MCP Playwright tools.**
+**Use XcodeBuildMCP for iOS Simulator screenshots:**
 
 ```
 FOR EACH feature/change:
   1. Identify HOW to trigger this specific feature
-  2. Take multiple screenshots at different wait times to capture the feature:
-     - node scripts/capture-screenshot.js "file:///app/preview/index.html" "path/screenshot.png" 500
-     - node scripts/capture-screenshot.js "file:///app/preview/index.html" "path/screenshot.png" 2000
-     - node scripts/capture-screenshot.js "file:///app/preview/index.html" "path/screenshot.png" 4000
-  3. Analyze screenshots - DID IT WORK?
-  4. Record: PASS or FAIL with evidence
+  2. Wait for hot reload to apply changes (1-2 seconds)
+  3. Take screenshot via iOS Simulator:
+     - mcp__XcodeBuildMCP__screenshot
+  4. Analyze screenshots - DID IT WORK?
+  5. Record: PASS or FAIL with evidence
 
   IF FAILED:
     - Fix the bug immediately
@@ -391,9 +447,8 @@ FOR EACH feature/change:
     - DO NOT proceed until it works
 ```
 
-**NOTE: For interactive testing (clicks/drags), the screenshot script captures static states.
-Verify that visual elements render correctly. Full interaction testing happens when user
-opens http://localhost:8080 after the loop completes.**
+**NOTE: Hot reload updates both iOS Simulator (AI testing) and Expo Go (user device).
+The user can test interactively on their device while AI iterates.**
 
 **Feature Testing Examples (MUST FOLLOW):**
 | Feature Added | How to Test | Expected Result |
@@ -468,8 +523,25 @@ After user selects "Continue Project" and chooses a project:
 
 ### Step A: Setup Session
 ```bash
+# Create new session directory for screenshots
 mkdir -p projects/[project-name]/sessions/session-$(date +%Y%m%d-%H%M%S)/screenshots
-cp projects/[project-name]/game.js preview/game.js
+```
+
+**Work directly in the Expo app directory:**
+- Project location: `expo-games/apps/[project-name]/`
+- Main game file: `expo-games/apps/[project-name]/App.tsx`
+
+### Step A2: Start Expo Dev Server
+
+If not already running:
+```bash
+cd expo-games/apps/[project-name] && npx expo start --tunnel &
+```
+
+### Step A3: Boot iOS Simulator
+
+```bash
+mcp__XcodeBuildMCP__boot_simulator
 ```
 
 ### Step B: Run Improvement Loop
@@ -529,12 +601,18 @@ Same iteration loop as NEW GAME (Steps 1-6 above), but with focus on user's spec
 
 For each iteration 1 to [N] (or until bug fixed for "Fix Specific Bug" mode):
 
-#### Step 1: Capture Screenshots
+#### Step 1: Capture Screenshots via iOS Simulator
 ```bash
-node scripts/capture-screenshot.js "file:///app/preview/index.html" "projects/[name]/sessions/[session]/screenshots/iter-[X]-01.png" 500
-node scripts/capture-screenshot.js "file:///app/preview/index.html" "projects/[name]/sessions/[session]/screenshots/iter-[X]-02.png" 2000
-node scripts/capture-screenshot.js "file:///app/preview/index.html" "projects/[name]/sessions/[session]/screenshots/iter-[X]-03.png" 4000
+# Ensure simulator is booted and Expo app is running
+mcp__XcodeBuildMCP__screenshot
+# Save to: projects/[name]/sessions/[session]/screenshots/iter-[X]-01.png
+
+# Wait for game state to progress, capture again
+mcp__XcodeBuildMCP__screenshot
+# Save to: projects/[name]/sessions/[session]/screenshots/iter-[X]-02.png
 ```
+
+Hot reload ensures changes are immediately visible in both Simulator and Expo Go.
 
 #### Step 2: Analyze Screenshots
 Read EACH screenshot with the Read tool and evaluate:
@@ -557,28 +635,28 @@ Read EACH screenshot with the Read tool and evaluate:
 **Use the Skill tool** - this gives you full skill context, not just reading a file.
 
 #### Step 4: Make Improvements
-Edit preview/game.js (max 3 changes per iteration)
+Edit `expo-games/apps/[project-name]/App.tsx` (max 3 changes per iteration)
 **Track each change** - you will test each one.
+**Hot reload** applies changes to both Simulator and user's device automatically.
 
 #### Step 5: TEST EACH Feature (MANDATORY - PER FEATURE)
 **Test EVERY feature you changed. Not once per iteration - ONCE PER FEATURE.**
 
-**Use ONLY bash scripts. NEVER use MCP Playwright tools.**
+**Use XcodeBuildMCP for iOS Simulator screenshots:**
 
 ```
 FOR EACH feature/change:
   1. Identify what should be visible/working
-  2. Capture screenshots at different times:
-     node scripts/capture-screenshot.js "file:///app/preview/index.html" "[output]" [wait-ms]
-  3. For interactive testing, use the game tester:
-     node scripts/game-tester.js quick "[output-dir]"
+  2. Wait for hot reload (1-2 seconds)
+  3. Capture screenshot via iOS Simulator:
+     mcp__XcodeBuildMCP__screenshot
   4. Analyze screenshots - Check: LOOKS good? FEELS right? WORKS correctly?
   5. Record PASS/FAIL with evidence
 
   IF FAILED:
     1. Add to known-issues.json with severity and evidence
     2. Attempt fix
-    3. Re-test
+    3. Re-test (hot reload applies immediately)
     4. If still failing after 2 attempts, mark issue as "open" and continue
 ```
 
@@ -674,36 +752,35 @@ FOR EACH feature/change:
 
 **After all iterations but BEFORE marking complete, run a deep test:**
 
-### Step 1: Run Deep Game Test
-```bash
-node scripts/game-tester.js deep "projects/[name]/sessions/[session]/final-test/" 60
-```
+### Step 1: Capture Final Screenshots via iOS Simulator
 
-This runs for 60 seconds and tests:
-- Normal gameplay flow
-- Rapid tap stress test
-- Corner/edge tap handling
-- Stability over time
+```bash
+# Capture multiple states of the game
+mcp__XcodeBuildMCP__screenshot
+# Save to: projects/[name]/sessions/[session]/final-test/test-01-initial.png
+
+# Wait and capture gameplay state
+mcp__XcodeBuildMCP__screenshot
+# Save to: projects/[name]/sessions/[session]/final-test/test-02-gameplay.png
+
+# Capture app logs for any errors
+mcp__XcodeBuildMCP__capture_logs
+```
 
 ### Step 2: Analyze Test Results
 
-Read the test results:
-```bash
-cat projects/[name]/sessions/[session]/final-test/test-results.json
-```
-
 **Check for:**
-- Console errors (critical)
-- Issues found during playtest
-- Screenshot evidence of problems
+- Console/app logs errors (critical)
+- Visual issues in screenshots
+- Layout problems
 
 ### Step 3: Review All Screenshots
 
 Read EACH screenshot from the final test:
-- `test-00-initial.png` - Does game load correctly?
-- `test-XX-Xs.png` - Does gameplay look/feel right over time?
-- `test-edge-*.png` - Do edge cases work?
-- `test-XX-final.png` - Is game in good state after extended play?
+- `test-01-initial.png` - Does game load correctly?
+- `test-02-gameplay.png` - Does gameplay look/feel right?
+
+**The user will do interactive testing on their device via Expo Go.**
 
 ### Step 4: Document Any Issues Found
 
@@ -770,12 +847,7 @@ Overall: [PASS - Ready to ship / ISSUES FOUND - See known-issues.json]
 
 After all [N] iterations AND final comprehensive test:
 
-1. Save final game:
-```bash
-cp preview/game.js projects/[project-name]/game.js
-```
-
-2. Update project.json:
+1. Update project.json:
 
 **Read the current project.json, then update these fields:**
 ```json
@@ -786,25 +858,42 @@ cp preview/game.js projects/[project-name]/game.js
 }
 ```
 
-3. Print completion summary:
+2. Print Human Testing Handoff:
 ```
 ═══════════════════════════════════════════════════════════════════════════════
-█ CHAD LOOP COMPLETE
+█ CHAD LOOP COMPLETE - [N]/[N] iterations
 ═══════════════════════════════════════════════════════════════════════════════
+
+✓ AI Testing: All quality gates passed
+✓ Game runs stable in iOS Simulator
+✓ Hot reload active - changes sync automatically
 
 Project: [project-name]
-Iterations: [N]/[N] completed
-Game saved to: projects/[project-name]/game.js
+Location: expo-games/apps/[project-name]/
 
-► TEST YOUR GAME (copy this URL into your browser):
-file://wsl.localhost/Ubuntu/home/wsley/Coding/GameSkillsFrameWork/preview/index.html
+═══════════════════════════════════════════════════════════════════════════════
+█ YOUR TURN: Test on your device
+═══════════════════════════════════════════════════════════════════════════════
 
-To continue improving: run /chad → Continue Project
+Expo Go should have hot-reloaded automatically with all changes.
+
+If not connected, scan the QR code from the Expo dev server output.
+
+► Play test the game on your device
+► Check that interactions feel right
+► Verify performance is smooth
+
+═══════════════════════════════════════════════════════════════════════════════
+█ NEXT STEPS
+═══════════════════════════════════════════════════════════════════════════════
+
+When satisfied with testing:
+  • Run /build to create App Store build
+  • Run /chad → Continue Project for more iterations
+
+To stop the dev server: Ctrl+C in the terminal running Expo
 ═══════════════════════════════════════════════════════════════════════════════
 ```
-
-**NOTE:** The preview files are mounted from WSL, so they're directly accessible from Windows.
-The user can copy the WSL file:// URL and paste it into their Windows browser.
 
 ---
 
@@ -985,71 +1074,69 @@ All 10 iterations were used to polish every aspect.
 
 ## Troubleshooting
 
-### "Could not find Chrome/Chromium" from screenshot script
+### iOS Simulator not booting
 
 ```
-Fix: The Playwright chromium browser isn't installed.
-Run: npx playwright install chromium
+Fix: Ensure Xcode and simulators are installed.
+Use XcodeBuildMCP to list available simulators:
+  mcp__XcodeBuildMCP__list_simulators
 
-This installs to ~/.cache/ms-playwright/chromium-*/
+Then boot the desired simulator:
+  mcp__XcodeBuildMCP__boot_simulator
 ```
 
-### "libnspr4.so" or other missing library errors (WSL)
-
-```
-Fix: System dependencies for Chromium aren't installed.
-Run ONE TIME with sudo:
-
-sudo apt-get update && sudo apt-get install -y libnspr4 libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libpango-1.0-0 libcairo2 libasound2
-
-Or shorter:
-sudo npx playwright install-deps chromium
-
-This is a one-time setup for WSL.
-```
-
-### Browser hangs or MCP lock issues
-
-```
-This is why we use the bash puppeteer script instead of MCP Playwright.
-
-If you see "Browser is already in use" or similar MCP errors:
-1. DO NOT use MCP Playwright tools
-2. Use: node scripts/capture-screenshot.js <url> <output> [wait]
-
-Kill any stuck processes:
-  pkill -f chromium; pkill -f chrome
-```
-
-### "Cannot navigate to preview"
-
-```
-Fix: Ensure the preview path is a valid file:// URL.
-The path must be absolute: file:///home/user/project/preview/index.html
-NOT: file://preview/index.html
-```
-
-### Screenshot shows blank white page
+### Expo dev server won't start
 
 ```
 Possible causes:
-1. game.js has syntax errors - check console messages
-2. Game not initialized - ensure setup() is called
-3. Canvas not rendering - check if canvas element exists
+1. Dependencies not installed
+2. Port already in use
 
-Fix: Use mcp__playwright__browser_console_messages to see errors.
+Fix:
+1. cd expo-games/apps/[project-name] && npm install
+2. Kill existing Expo process: pkill -f expo
+3. Restart: npx expo start --tunnel
+```
+
+### Hot reload not working
+
+```
+Possible causes:
+1. Expo dev server disconnected
+2. Syntax error in App.tsx
+
+Fix:
+1. Check terminal for Expo errors
+2. Verify App.tsx has valid TypeScript/JSX
+3. Shake device to open Expo menu → Reload
+```
+
+### Screenshot shows blank/error screen
+
+```
+Possible causes:
+1. App.tsx has syntax errors - check Expo logs
+2. Missing dependencies in the game
+3. Simulator not running the Expo app
+
+Fix:
+1. Check mcp__XcodeBuildMCP__capture_logs for errors
+2. Verify Expo is running and connected to simulator
+3. Ensure the Expo Go app is open in simulator
 ```
 
 ### Loop seems stuck on same issue
 
 ```
 Possible causes:
-1. Fix isn't actually being applied
+1. Fix isn't being applied (hot reload issue)
 2. Issue is misdiagnosed
 3. Multiple issues masking each other
 
-Fix: Manually inspect the screenshot and code.
-Consider reducing to 1 issue per iteration.
+Fix:
+1. Check Expo terminal for hot reload confirmation
+2. Manually inspect the screenshot and code
+3. Consider reducing to 1 issue per iteration
 ```
 
 ### "Max iterations reached" without completion
@@ -1061,4 +1148,12 @@ Consider:
 - Simplifying the game prompt
 - Running more iterations
 - Manually fixing persistent issues
+```
+
+### XcodeBuildMCP tools not responding
+
+```
+Fix: Ensure MCP server is running.
+Check .mcp.json configuration.
+Restart Claude session if needed.
 ```

@@ -382,6 +382,10 @@ class Action {
         return new Action('fadeTo', duration, { target: 0 });
     }
 
+    static fadeTo(alpha, duration) {
+        return new Action('fadeTo', duration, { target: alpha });
+    }
+
     static rotateTo(angle, duration) {
         return new Action('rotateTo', duration, { target: angle });
     }
