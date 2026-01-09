@@ -847,7 +847,7 @@ Overall: [PASS - Ready to ship / ISSUES FOUND - See known-issues.json]
 
 After all [N] iterations AND final comprehensive test:
 
-1. Update project.json:
+### Step 1: Update project.json
 
 **Read the current project.json, then update these fields:**
 ```json
@@ -858,7 +858,67 @@ After all [N] iterations AND final comprehensive test:
 }
 ```
 
-2. Print Human Testing Handoff:
+### Step 2: Auto-Ship to Completed Games Repository
+
+**Automatically archive the game to chadcompletedGames:**
+
+```bash
+# Clone or update the completed games repo
+COMPLETED_REPO="/tmp/chadcompletedGames"
+if [ -d "$COMPLETED_REPO" ]; then
+  cd "$COMPLETED_REPO" && git pull origin main
+else
+  git clone https://github.com/heyimnotai/chadcompletedGames.git "$COMPLETED_REPO"
+fi
+
+# Copy game to repository
+GAME_NAME="[project-name]"
+SOURCE="expo-games/apps/$GAME_NAME"
+DEST="$COMPLETED_REPO/games/$GAME_NAME"
+
+rm -rf "$DEST"
+cp -r "$SOURCE" "$DEST"
+
+# Create game README if it doesn't exist
+cat > "$DEST/README.md" << EOF
+# [Game Name]
+
+[Description from project.json]
+
+## Stats
+- Total Iterations: [totalIterations]
+- Sessions: [totalSessions]
+- Last Updated: [lastModified]
+
+## Built With
+- React Native + Expo
+- Chad Loop AI Development Framework
+EOF
+
+# Update main README games table
+# (Insert or update row in the games table)
+
+# Commit and push
+cd "$COMPLETED_REPO"
+git add .
+git commit -m "Auto-ship: [project-name] - [totalIterations] iterations"
+git push origin main
+```
+
+**Print shipping confirmation:**
+```
+═══════════════════════════════════════════════════════════════════════════════
+█ GAME ARCHIVED TO COMPLETED GAMES
+═══════════════════════════════════════════════════════════════════════════════
+
+✓ Shipped to: https://github.com/heyimnotai/chadcompletedGames
+✓ Location: games/[project-name]/
+✓ Iterations: [totalIterations]
+
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+### Step 3: Print Human Testing Handoff
 ```
 ═══════════════════════════════════════════════════════════════════════════════
 █ CHAD LOOP COMPLETE - [N]/[N] iterations
