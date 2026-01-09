@@ -133,7 +133,26 @@ START LOOP
 
 #### Path A: NEW GAME
 
-**Question 2A: Game Idea**
+**Question 2A: Design Mode**
+```json
+{
+  "questions": [{
+    "question": "How detailed is your game idea?",
+    "header": "Design",
+    "multiSelect": false,
+    "options": [
+      {"label": "Quick start", "description": "Pick a template, start fast"},
+      {"label": "Extensive Design", "description": "Detailed vision with features, systems, references"}
+    ]
+  }]
+}
+```
+
+---
+
+**If "Quick start" selected:**
+
+**Question 2A-Quick: Game Type**
 ```json
 {
   "questions": [{
@@ -149,6 +168,42 @@ START LOOP
   }]
 }
 ```
+
+→ Continue to Question 3A (Testing Mode)
+
+---
+
+**If "Extensive Design" selected:**
+
+**Prompt user for detailed design input:**
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+█ EXTENSIVE DESIGN MODE
+═══════════════════════════════════════════════════════════════════════════════
+
+Describe your complete game vision. Include as much detail as you want:
+
+• Core gameplay mechanics
+• Visual style and effects
+• Features and systems
+• Reference games or materials
+• Target audience
+• What makes it unique
+
+Type your design (multi-line supported, end with empty line):
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+**After user inputs design:**
+
+1. Parse the design into categories
+2. Create `projects/[name]/design.json` from template
+3. Populate vision, features, requirements per category
+4. Set initial scores to 0%
+5. **Skip iteration count question** - runs until all categories reach threshold
+
+→ Continue to Question 3A (Testing Mode), then start EXTENSIVE DESIGN LOOP
 
 **Question 3A: Testing Mode**
 ```json
@@ -767,6 +822,206 @@ Time Elapsed: [duration]
 ```
 
 Then proceed to **CONTINUE OR END** prompt.
+
+---
+
+## EXTENSIVE DESIGN LOOP
+
+**Runs until ALL categories reach the completion threshold (default 85%).**
+
+### Step 1: Parse Design into Categories
+
+When user provides their extensive design, extract requirements into categories:
+
+```
+For each category in design.json:
+  - Read user's design prompt
+  - Identify features/requirements that belong to this category
+  - Add to category.requirements[]
+  - Estimate initial complexity
+```
+
+**Category Mapping:**
+| User Mentions | Category |
+|---------------|----------|
+| gameplay, mechanics, controls, rules | coreLoop |
+| animations, particles, effects, juice, visuals | visualPolish |
+| sounds, music, audio, SFX | audio |
+| menus, buttons, HUD, score display, tutorial | uiUx |
+| smooth, fast, 60fps, no lag | performance |
+| levels, progression, challenge, balance | difficulty |
+| addictive, rewards, hooks, session | retention |
+| clean code, refactor, bugs | codeQuality |
+
+### Step 2: Scoring Rubric (Be Realistic)
+
+**Score each category 0-100 based on these criteria:**
+
+```
+0-20%   : Not started or fundamentally broken
+21-40%  : Basic implementation, major issues
+41-60%  : Functional but rough, needs polish
+61-80%  : Good implementation, minor issues
+81-90%  : Polished, meets most requirements
+91-100% : Exceptional, exceeds requirements
+```
+
+**Category-Specific Scoring:**
+
+| Category | 40% (Functional) | 70% (Good) | 90% (Polished) |
+|----------|------------------|------------|----------------|
+| Core Loop | Basic mechanic works | Feels responsive | Feels great, no edge cases |
+| Visual Polish | Static sprites | Some animations | Juice everywhere, particles |
+| Audio | No audio | Basic SFX | Full audio, music, ducking |
+| UI/UX | Placeholder UI | Styled UI | Smooth transitions, feedback |
+| Performance | Runs | 30fps stable | 60fps, no hitches |
+| Difficulty | Single difficulty | Some progression | Smooth curve, balanced |
+| Retention | No hooks | Basic scoring | Rewards, hooks, addiction |
+| Code Quality | Works | Readable | Clean, patterns, no bugs |
+
+### Step 3: Calculate Overall Score
+
+```javascript
+overallScore = 0
+for each category:
+  overallScore += (category.score * category.weight / 100)
+
+// Weights must sum to 100
+// Default weights: coreLoop=20, visualPolish=15, audio=10,
+// uiUx=15, performance=10, difficulty=10, retention=15, codeQuality=5
+```
+
+### Step 4: Select Next Focus (Lowest Score)
+
+**Priority algorithm:**
+
+```
+1. Find category with LOWEST score
+2. If tie, prefer higher weight category
+3. If still tie, prefer order: coreLoop > retention > uiUx > visualPolish > difficulty > performance > audio > codeQuality
+4. Focus next iteration(s) on this category
+```
+
+**But respect dependencies:**
+- coreLoop must be ≥40% before focusing on visualPolish
+- coreLoop must be ≥40% before focusing on audio
+- uiUx must be ≥30% before focusing on retention
+
+### Step 5: Iteration Loop
+
+**For each iteration:**
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  EXTENSIVE DESIGN - Iteration [N]                                            │
+│  Overall: [X]% | Target: [threshold]%                                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  Category Scores:                                                            │
+│  ████████████░░░░░░░░ Core Loop:      60%                                   │
+│  ██████░░░░░░░░░░░░░░ Visual Polish:  30%  ← FOCUS                          │
+│  ████░░░░░░░░░░░░░░░░ Audio:          20%                                   │
+│  ████████████████░░░░ UI/UX:          80%                                   │
+│  ██████████████░░░░░░ Performance:    70%                                   │
+│  ████████████░░░░░░░░ Difficulty:     60%                                   │
+│  ██████████░░░░░░░░░░ Retention:      50%                                   │
+│  ████████████████████ Code Quality:   100%                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Working on: Visual Polish
+Target requirements:
+  - [ ] Add particle effects to coin collection
+  - [ ] Add screen shake on impact
+  - [ ] Animate score number changes
+```
+
+**Each iteration:**
+1. Show current scores dashboard
+2. Identify lowest scoring category
+3. List unfulfilled requirements from design.json
+4. Implement 1-3 improvements for that category
+5. Test with screenshots
+6. Re-evaluate scores for ALL categories
+7. Update design.json with new scores
+8. Check if threshold reached
+
+### Step 6: Re-evaluate After Each Iteration
+
+**After implementing changes:**
+
+```
+1. Take fresh screenshots
+2. Evaluate EACH category against rubric
+3. Be REALISTIC - don't inflate scores
+4. Update design.json:
+   - category.score = new score
+   - category.implemented.push(what was added)
+   - category.notes = observations
+5. Recalculate overallScore
+6. Log to iterationHistory
+```
+
+**Print score update:**
+```
+═══════════════════════════════════════════════════════════════════════════════
+█ SCORES UPDATED - Iteration [N]
+═══════════════════════════════════════════════════════════════════════════════
+
+Changes this iteration:
+  • Added particle burst on coin collect
+  • Added screen shake (3px, 100ms)
+
+Score changes:
+  Visual Polish: 30% → 45% (+15)
+  Core Loop:     60% → 62% (+2)  [side effect: feels better]
+
+Overall: 54% → 58%
+Target: 85%
+
+Next focus: Audio (20% - lowest)
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+### Step 7: Completion Check
+
+**After each iteration:**
+
+```
+if ALL categories >= completionThreshold:
+  → DESIGN COMPLETE - proceed to Continue or End
+else if any category stuck (no progress in 5 iterations):
+  → Warn user, suggest adjusting requirements or threshold
+else:
+  → Continue to next iteration
+```
+
+**When complete:**
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+█ EXTENSIVE DESIGN COMPLETE
+═══════════════════════════════════════════════════════════════════════════════
+
+🎮 [Game Name] has reached target quality!
+
+Final Scores:
+  Core Loop:      92% ████████████████████░
+  Visual Polish:  88% █████████████████░░░░
+  Audio:          85% █████████████████░░░░
+  UI/UX:          90% ██████████████████░░░
+  Performance:    95% ███████████████████░░
+  Difficulty:     87% █████████████████░░░░
+  Retention:      86% █████████████████░░░░
+  Code Quality:   91% ██████████████████░░░
+
+Overall: 89% (Target: 85%)
+Iterations: 47
+Time: 4h 23m
+
+All requirements from your original design have been implemented!
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+→ Proceed to **CONTINUE OR END** prompt
 
 ---
 

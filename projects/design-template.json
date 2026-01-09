@@ -1,0 +1,121 @@
+{
+  "version": "1.0",
+  "projectName": "",
+  "created": "",
+  "lastUpdated": "",
+
+  "vision": {
+    "summary": "One paragraph summary of the game",
+    "originalPrompt": "The full original design prompt from user",
+    "references": [
+      {
+        "name": "Reference game or material",
+        "url": "optional URL",
+        "whatToTake": "What aspect to learn from"
+      }
+    ],
+    "targetAudience": "Who is this game for",
+    "uniqueHook": "What makes this game special"
+  },
+
+  "completionThreshold": 85,
+  "overallScore": 0,
+  "status": "in_progress",
+
+  "categories": {
+    "coreLoop": {
+      "name": "Core Loop",
+      "description": "Main gameplay mechanics, what the player does repeatedly",
+      "score": 0,
+      "weight": 20,
+      "requirements": [],
+      "implemented": [],
+      "notes": ""
+    },
+    "visualPolish": {
+      "name": "Visual Polish",
+      "description": "Animations, particles, juice, screen effects",
+      "score": 0,
+      "weight": 15,
+      "requirements": [],
+      "implemented": [],
+      "notes": ""
+    },
+    "audio": {
+      "name": "Audio",
+      "description": "Sound effects, background music, audio feedback",
+      "score": 0,
+      "weight": 10,
+      "requirements": [],
+      "implemented": [],
+      "notes": ""
+    },
+    "uiUx": {
+      "name": "UI/UX",
+      "description": "Menus, HUD, feedback, flow, onboarding",
+      "score": 0,
+      "weight": 15,
+      "requirements": [],
+      "implemented": [],
+      "notes": ""
+    },
+    "performance": {
+      "name": "Performance",
+      "description": "60fps, no lag, smooth animations, memory",
+      "score": 0,
+      "weight": 10,
+      "requirements": [],
+      "implemented": [],
+      "notes": ""
+    },
+    "difficulty": {
+      "name": "Difficulty & Balance",
+      "description": "Progression curve, challenge, fairness",
+      "score": 0,
+      "weight": 10,
+      "requirements": [],
+      "implemented": [],
+      "notes": ""
+    },
+    "retention": {
+      "name": "Retention & Addiction",
+      "description": "Hooks, rewards, session design, 'one more game'",
+      "score": 0,
+      "weight": 15,
+      "requirements": [],
+      "implemented": [],
+      "notes": ""
+    },
+    "codeQuality": {
+      "name": "Code Quality",
+      "description": "Clean, maintainable, no bugs, proper patterns",
+      "score": 0,
+      "weight": 5,
+      "requirements": [],
+      "implemented": [],
+      "notes": ""
+    }
+  },
+
+  "features": [
+    {
+      "id": "feature-001",
+      "name": "Feature name",
+      "description": "What this feature does",
+      "category": "coreLoop",
+      "priority": "P0",
+      "status": "pending",
+      "implementedIn": null
+    }
+  ],
+
+  "iterationHistory": [
+    {
+      "iteration": 1,
+      "timestamp": "",
+      "focusCategory": "coreLoop",
+      "changes": [],
+      "scoresAfter": {}
+    }
+  ]
+}

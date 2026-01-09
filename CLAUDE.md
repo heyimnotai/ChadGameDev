@@ -79,6 +79,59 @@ When Chad solves a problem:
 
 This means Chad gets better at fixing common issues over time.
 
+## Extensive Design Mode
+
+For complex games with detailed requirements, use Extensive Design mode:
+
+### How It Works
+
+```
+/chad → New Game → Extensive Design → [describe your vision] → Chad builds it
+```
+
+Describe everything:
+- Core gameplay mechanics
+- Visual style, animations, effects
+- Audio and music requirements
+- UI/UX flows
+- Reference games to learn from
+- What makes it unique
+
+### Scoring System
+
+Chad rates your game across 8 categories (0-100%):
+
+| Category | Weight | What It Measures |
+|----------|--------|------------------|
+| Core Loop | 20% | Main gameplay mechanics |
+| Visual Polish | 15% | Animations, particles, juice |
+| Audio | 10% | Sound effects, music |
+| UI/UX | 15% | Menus, HUD, feedback |
+| Performance | 10% | 60fps, smoothness |
+| Difficulty | 10% | Progression, balance |
+| Retention | 15% | Hooks, rewards, addiction |
+| Code Quality | 5% | Clean, maintainable |
+
+### Auto-Priority
+
+Chad automatically focuses on the **lowest scoring category** each iteration:
+
+```
+Iteration 12:
+  Core Loop:      75%
+  Visual Polish:  45%  ← FOCUS (lowest)
+  Audio:          30%
+  ...
+```
+
+### Completion
+
+Runs until ALL categories reach threshold (default 85%), then prompts to continue or end.
+
+Your design is saved to `projects/[game]/design.json` and continuously referenced.
+
+---
+
 ## Available Commands
 
 | Command | Description |
