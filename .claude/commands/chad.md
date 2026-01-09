@@ -32,24 +32,30 @@ Then run:
 When you run `/chad`:
 
 ```
-IMMEDIATE: Read projects/*/project.json (silent, no output)
+IMMEDIATE: Glob projects/*/project.json (get NAMES only, don't read files)
      ↓
 Question 1: Mode (New Game / Continue Project)
      ↓
-Question 2: [If Continue] Select Project
+Question 2: [If Continue] Select Project (by name)
      ↓
-Question 3: Focus (Auto-improve / Fix Bug / New Feature / More Juice / etc.)
+Question 3: Focus (Complete TaskList / Auto-improve / Fix Bug / etc.)
      ↓
-Question 4: [If not Fix Bug] Iteration Count
+Question 4: Testing Mode (Browser / iOS Simulator / Expo Go)
      ↓
-START LOOP (only NOW does AI processing begin)
+Question 5: [If not TaskList or Fix Bug] Iteration Count
+     ↓
+LOAD PROJECT (NOW read selected project's files)
+     ↓
+START LOOP
 ```
+
+**Key optimization:** Project files are only read AFTER user selects which project to work on.
 
 ### Focus Modes
 
 | Focus | Iterations | Behavior |
 |-------|------------|----------|
-| Fix known issues | User-selected | Fix issues from known-issues.json first, then auto-improve |
+| Complete TaskList | Until all done | Works through tasklist.md + known-issues until complete |
 | Auto-improve | User-selected | AI analyzes and improves anything |
 | Fix specific bug | Until fixed | Keeps iterating until bug is resolved |
 | Implement feature | User-selected | All iterations focus on that feature |
@@ -78,39 +84,25 @@ START LOOP (only NOW does AI processing begin)
 
 ## Workflow
 
-### Phase 0: IMMEDIATE Project Discovery & Issue Check
+### Phase 0: FAST Project Discovery (Names Only)
 
 **THE VERY FIRST THING when /chad runs - NO exceptions:**
 
 ```
-1. Glob("projects/*/project.json")
-2. Read each project.json found
-3. Store: name, totalIterations, expoPath for each
-4. Read projects/[name]/known-issues.json if it exists
-5. Note any open issues for the "Continue Project" flow
-6. Verify expo-games/apps/[name] exists for each project
+1. Glob("projects/*/project.json") - get list of paths only
+2. Extract project NAMES from paths (do NOT read file contents yet)
+3. Store just the names: ["block-blast", "hyper-tetris", etc.]
 ```
 
-**NO output. NO thinking. Just read the files and proceed to questions.**
+**DO NOT:**
+- Read project.json contents
+- Read known-issues.json
+- Read tasklist.md
+- Count iterations or check status
 
-**Known Issues File Structure:**
-```json
-{
-  "issues": [
-    {
-      "id": "issue-001",
-      "description": "Score doesn't update on coin collect",
-      "feature": "scoring",
-      "severity": "major",
-      "status": "open",
-      "foundIn": "session-20260108-120000",
-      "evidence": "screenshots/iter-5-02.png"
-    }
-  ]
-}
-```
+**ONLY get the list of project names. Nothing else.**
 
-**If open issues exist:** Mention them when asking about focus, suggest "Fix specific bug" mode.
+**NO output. NO thinking. Just glob and extract names, then IMMEDIATELY ask questions.**
 
 ---
 
@@ -198,7 +190,7 @@ START LOOP (only NOW does AI processing begin)
 
 **Question 2B: Select Project**
 
-Build from Phase 0 data:
+Build from Phase 0 names (NO file reading yet):
 ```json
 {
   "questions": [{
@@ -206,7 +198,7 @@ Build from Phase 0 data:
     "header": "Project",
     "multiSelect": false,
     "options": [
-      {"label": "[name]", "description": "[X] iterations"}
+      {"label": "[name]", "description": "Select to continue"}
     ]
   }]
 }
@@ -214,27 +206,7 @@ Build from Phase 0 data:
 
 **Question 3B: Focus**
 
-**If known-issues.json has open issues**, modify the question:
-```json
-{
-  "questions": [{
-    "question": "What should we focus on? (Note: [N] open issues from last session)",
-    "header": "Focus",
-    "multiSelect": false,
-    "options": [
-      {"label": "Complete TaskList", "description": "Work through tasklist.md + known issues until all done"},
-      {"label": "Fix known issues", "description": "[N] issues from last session"},
-      {"label": "Auto-improve", "description": "Let Chad analyze and decide"},
-      {"label": "Fix specific bug", "description": "Describe a different bug"},
-      {"label": "Implement feature", "description": "Add a specific feature you describe"},
-      {"label": "More juice", "description": "Better animations, particles, effects"},
-      {"label": "New mechanics", "description": "Add gameplay features"}
-    ]
-  }]
-}
-```
-
-**If no open issues**, use standard question:
+**Ask focus question BEFORE reading any project files:**
 ```json
 {
   "questions": [{
@@ -242,7 +214,7 @@ Build from Phase 0 data:
     "header": "Focus",
     "multiSelect": false,
     "options": [
-      {"label": "Complete TaskList", "description": "Work through tasklist.md until all done"},
+      {"label": "Complete TaskList", "description": "Work through tasklist.md + known issues"},
       {"label": "Auto-improve", "description": "Let Chad analyze and decide"},
       {"label": "Fix specific bug", "description": "Describe a bug - runs until fixed"},
       {"label": "Implement feature", "description": "Add a specific feature you describe"},
@@ -301,6 +273,42 @@ Build from Phase 0 data:
     ]
   }]
 }
+```
+
+**→ PROCEED TO PHASE 1.5**
+
+---
+
+### Phase 1.5: Load Selected Project (AFTER Questions)
+
+**NOW - and ONLY now - read the selected project's files:**
+
+```
+1. Read projects/[selected-project]/project.json
+   - Get: totalIterations, totalSessions, status, description
+
+2. Read projects/[selected-project]/known-issues.json (if exists)
+   - Get: open issues list
+
+3. Read projects/[selected-project]/tasklist.md (if exists and Complete TaskList mode)
+   - Get: pending tasks
+
+4. Read chad/patches.json
+   - Get: known fixes for quick application
+```
+
+**Print project summary:**
+```
+═══════════════════════════════════════════════════════════════
+█ LOADING PROJECT: [name]
+═══════════════════════════════════════════════════════════════
+
+Sessions: [N] | Iterations: [N]
+Open Issues: [N]
+Pending Tasks: [N] (from tasklist.md)
+
+Starting [focus mode]...
+═══════════════════════════════════════════════════════════════
 ```
 
 **→ PROCEED TO PHASE 2**
