@@ -1,0 +1,17 @@
+{
+  "version": "1.0",
+  "description": "Database of learned fixes. When a fix is used 3+ times, it gets promoted to the relevant skill.",
+  "patches": [],
+  "patchTemplate": {
+    "id": "PATCH-001",
+    "errorPattern": "Description or regex pattern of the error",
+    "category": "rendering|touch|audio|animation|state|layout|performance",
+    "fix": "Description of what fixed it",
+    "codeExample": "Optional code snippet showing the fix",
+    "usageCount": 0,
+    "firstSeen": "ISO timestamp",
+    "lastUsed": "ISO timestamp",
+    "promotedToSkill": null,
+    "relatedSkill": "skill-name if applicable"
+  }
+}

@@ -34,6 +34,51 @@ Games are developed using React Native + Expo, enabling native iOS development w
 4. **Optimize iteratively**: `/optimize`
 5. **Push changes**: `/push`
 
+## TaskList Mode (Batch Processing)
+
+Create a tasklist file and Chad will work through every item until complete:
+
+### 1. Create Your TaskList
+
+Copy the template and add your tasks:
+```bash
+cp projects/tasklist-template.md projects/[game-name]/tasklist.md
+```
+
+Edit with your bugs/features:
+```markdown
+## Tasks
+
+- [ ] [P0] Bug: Game crashes when score reaches 1000
+- [ ] [P1] Feature: Add combo multiplier for rapid taps
+- [ ] [P2] Polish: Screen shake feels weak on explosions
+- [ ] Bug: Score label overlaps pause button
+- [ ] Feature: Add power-up that slows time
+```
+
+### 2. Run Complete TaskList
+
+```
+/chad → Continue Project → [select game] → Complete TaskList
+```
+
+Chad will:
+- Merge your tasklist with any known-issues.json
+- Process tasks by priority (P0 first)
+- Loop: implement → test → screenshot → verify until fixed
+- Mark tasks `[x]` as they complete
+- Learn from fixes (stores in patches.json)
+- Auto-improve skills when a fix is used 3+ times
+
+### 3. Self-Improving System
+
+When Chad solves a problem:
+1. Fix is stored in `chad/patches.json`
+2. Next time similar issue appears, the fix is applied automatically
+3. After a fix is used 3+ times, it's promoted to the relevant skill file
+
+This means Chad gets better at fixing common issues over time.
+
 ## Available Commands
 
 | Command | Description |

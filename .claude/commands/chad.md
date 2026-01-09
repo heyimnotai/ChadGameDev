@@ -222,7 +222,8 @@ Build from Phase 0 data:
     "header": "Focus",
     "multiSelect": false,
     "options": [
-      {"label": "Fix known issues", "description": "[N] issues from last session - Recommended"},
+      {"label": "Complete TaskList", "description": "Work through tasklist.md + known issues until all done"},
+      {"label": "Fix known issues", "description": "[N] issues from last session"},
       {"label": "Auto-improve", "description": "Let Chad analyze and decide"},
       {"label": "Fix specific bug", "description": "Describe a different bug"},
       {"label": "Implement feature", "description": "Add a specific feature you describe"},
@@ -241,7 +242,8 @@ Build from Phase 0 data:
     "header": "Focus",
     "multiSelect": false,
     "options": [
-      {"label": "Auto-improve", "description": "Let Chad analyze and decide (Recommended)"},
+      {"label": "Complete TaskList", "description": "Work through tasklist.md until all done"},
+      {"label": "Auto-improve", "description": "Let Chad analyze and decide"},
       {"label": "Fix specific bug", "description": "Describe a bug - runs until fixed"},
       {"label": "Implement feature", "description": "Add a specific feature you describe"},
       {"label": "More juice", "description": "Better animations, particles, effects"},
@@ -250,6 +252,14 @@ Build from Phase 0 data:
   }]
 }
 ```
+
+**If "Complete TaskList" selected:**
+- **DO NOT ask for iteration count** - runs until ALL tasks are complete
+- Read `projects/[project-name]/tasklist.md` for user-defined tasks
+- Merge in any open issues from `projects/[project-name]/known-issues.json`
+- Build unified task list sorted by priority (P0 → P3)
+- Loop through tasks one at a time until all marked `[x]`
+- See **COMPLETE TASKLIST MODE** section below for full behavior
 
 **If "Fix specific bug" selected:**
 - Ask user to describe the bug (via AskUserQuestion with text input)
@@ -608,6 +618,147 @@ Same iteration loop as NEW GAME (Steps 1-6 above), but with focus on user's spec
 - First 1-3 iterations: Focus on fixing that specific issue
 - ONCE FIXED: Automatically switch to general improvements (P3-P5)
 - **NEVER finish early. Always use all iterations.**
+
+---
+
+## COMPLETE TASKLIST MODE
+
+**This mode runs until ALL tasks are complete. No iteration limit.**
+
+### Step 1: Load and Merge Tasks
+
+```bash
+# Read user's tasklist
+Read projects/[project-name]/tasklist.md
+
+# Read known issues
+Read projects/[project-name]/known-issues.json
+
+# Merge into unified list, sorted by priority:
+# P0 (critical) → P1 (high) → P2 (medium) → P3 (low) → untagged
+```
+
+**Unified Task Format:**
+```json
+{
+  "tasks": [
+    {
+      "id": "task-001",
+      "source": "tasklist.md | known-issues.json",
+      "type": "bug | feature | polish | refactor",
+      "priority": "P0 | P1 | P2 | P3",
+      "description": "The task description",
+      "status": "pending | in_progress | completed | failed",
+      "attempts": 0,
+      "maxAttempts": 3
+    }
+  ]
+}
+```
+
+### Step 2: Task Processing Loop
+
+**For EACH task in the list:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  TASK: [description]                                             │
+│  Priority: [P0-P3] | Type: [bug/feature/polish] | Attempt: [N/3] │
+└─────────────────────────────────────────────────────────────────┘
+
+1. Mark task as "in_progress"
+2. Check patches.json for known fixes matching this error pattern
+3. If patch found:
+   - Apply the known fix
+   - Increment patch usageCount
+   - Test immediately
+4. If no patch or patch didn't work:
+   - Analyze the problem
+   - Implement a fix
+   - Test with screenshots
+5. If FIXED:
+   - Mark task as "completed" in tasklist.md (change [ ] to [x])
+   - If this was a new fix, add to patches.json
+   - Print success and move to next task
+6. If NOT FIXED:
+   - Increment attempts
+   - If attempts < 3: Try different approach
+   - If attempts >= 3: Mark as "failed", add to known-issues.json, move on
+```
+
+### Step 3: Learning System (patches.json)
+
+**When a fix works:**
+
+```json
+{
+  "id": "PATCH-XXX",
+  "errorPattern": "Score doesn't update when collecting items",
+  "category": "state",
+  "fix": "Ensure setState is called after modifying score variable",
+  "codeExample": "setScore(prev => prev + points); // Not: score += points",
+  "usageCount": 1,
+  "firstSeen": "2026-01-09T12:00:00Z",
+  "lastUsed": "2026-01-09T12:00:00Z",
+  "promotedToSkill": null,
+  "relatedSkill": "state-management"
+}
+```
+
+**When a patch is used 3+ times:**
+
+1. Read the related skill file (if exists)
+2. Append the fix to the skill's "Common Issues" or "Patterns" section
+3. Mark `promotedToSkill: "[skill-name]"` in patches.json
+4. Print: "Promoted PATCH-XXX to [skill-name] skill"
+
+### Step 4: Progress Tracking
+
+**After EACH task, print:**
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+█ TASK COMPLETE: [description]
+═══════════════════════════════════════════════════════════════════════════════
+
+Status: ✓ FIXED | ✗ FAILED (moving on)
+Attempts: [N]
+Fix Applied: [description of what fixed it]
+Patch: [PATCH-XXX created | PATCH-XXX used (count: N)]
+
+Progress: [X]/[Y] tasks complete
+Remaining: [list remaining task descriptions]
+
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+**Update tasklist.md in real-time:**
+- Change `- [ ]` to `- [x]` for completed tasks
+- Add completion timestamp as comment: `<!-- completed 2026-01-09 12:00 -->`
+
+### Step 5: Completion
+
+**When ALL tasks are complete (or all remaining are failed):**
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+█ TASKLIST COMPLETE
+═══════════════════════════════════════════════════════════════════════════════
+
+Total Tasks: [N]
+Completed: [X] ✓
+Failed: [Y] ✗ (see known-issues.json)
+
+New Patches Created: [N]
+Patches Used: [N]
+Patches Promoted to Skills: [N]
+
+Time Elapsed: [duration]
+
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+Then proceed to normal completion flow (auto-ship, etc.)
 
 ---
 
