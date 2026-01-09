@@ -41,6 +41,7 @@ Games are developed using React Native + Expo, enabling native iOS development w
 | `/chad` | Create new Expo game or continue existing development |
 | `/build` | Build native iOS app for App Store via EAS |
 | `/submit` | Submit to App Store Connect via EAS |
+| `/ship` | Archive completed game to chadcompletedGames repository |
 | `/test-ios` | Run on iOS Simulator |
 | `/optimize` | Full Chad Loop optimization cycle |
 | `/push` | Commit and push to GitHub |
