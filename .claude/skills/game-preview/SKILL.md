@@ -60,6 +60,11 @@ Color.fromHex('#FF5733')
 Create `preview/game.js` with your game logic:
 
 ```javascript
+// REQUIRED: Reset any previous game state before creating new game
+if (window.preview && window.preview.resetGameState) {
+    window.preview.resetGameState();
+}
+
 class MyGame {
     constructor() {
         this.scene = new Scene({
@@ -92,6 +97,7 @@ class MyGame {
     getObjectCount() { return this.scene.children.length; }
     restart() { /* Reset game state */ }
     reset() { /* Full reset */ }
+    cleanup() { /* Called before switching to new game - clear intervals/timeouts */ }
 }
 
 window.gameInstance = new MyGame();

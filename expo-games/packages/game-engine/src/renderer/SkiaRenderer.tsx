@@ -32,10 +32,9 @@ function RenderSprite({ entity }: { entity: SpriteEntity }) {
 }
 
 function RenderText({ entity }: { entity: TextEntity }) {
-  if (entity.hidden) return null;
-
   const font = useFont(null, entity.fontSize);
-  if (!font) return null;
+
+  if (entity.hidden || !font) return null;
 
   let x = entity.position.x;
   if (entity.align === 'center') {
@@ -61,14 +60,29 @@ function RenderText({ entity }: { entity: TextEntity }) {
 function RenderCircle({ entity }: { entity: CircleEntity }) {
   if (entity.hidden) return null;
 
+  const hasStroke = entity.strokeColor && entity.strokeWidth && entity.strokeWidth > 0;
+
   return (
-    <Circle
-      cx={entity.position.x}
-      cy={entity.position.y}
-      r={entity.radius * entity.scale.x}
-      color={entity.color.toSkiaColor()}
-      opacity={entity.alpha}
-    />
+    <>
+      <Circle
+        cx={entity.position.x}
+        cy={entity.position.y}
+        r={entity.radius * entity.scale.x}
+        color={entity.color.toSkiaColor()}
+        opacity={entity.alpha}
+      />
+      {hasStroke && (
+        <Circle
+          cx={entity.position.x}
+          cy={entity.position.y}
+          r={entity.radius * entity.scale.x}
+          color={entity.strokeColor!.toSkiaColor()}
+          opacity={entity.alpha}
+          style="stroke"
+          strokeWidth={entity.strokeWidth}
+        />
+      )}
+    </>
   );
 }
 
