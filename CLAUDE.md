@@ -99,18 +99,30 @@ Describe everything:
 
 ### Scoring System
 
-Chad rates your game across 8 categories (0-100%):
+Chad rates your game across 11 iOS-focused categories (0-100%):
+
+**90% = Top 100 in App Store category. Scoring is brutally honest.**
 
 | Category | Weight | What It Measures |
 |----------|--------|------------------|
-| Core Loop | 20% | Main gameplay mechanics |
-| Visual Polish | 15% | Animations, particles, juice |
-| Audio | 10% | Sound effects, music |
-| UI/UX | 15% | Menus, HUD, feedback |
-| Performance | 10% | 60fps, smoothness |
-| Difficulty | 10% | Progression, balance |
-| Retention | 15% | Hooks, rewards, addiction |
-| Code Quality | 5% | Clean, maintainable |
+| Core Loop | 18% | Main gameplay - must be inherently satisfying |
+| Controls & Input | 10% | Touch responsiveness - must feel instant |
+| Visual Polish | 12% | Animations, particles, juice on everything |
+| Audio Design | 8% | SFX, music, ducking - mute must work |
+| Haptic Feedback | 6% | iOS Taptic Engine - enhances, not annoys |
+| UI/UX Design | 10% | Menus, HUD, iOS HIG compliance |
+| Onboarding | 6% | 30 seconds to fun, learn by doing |
+| Performance | 10% | **60fps on ALL devices** - non-negotiable |
+| Difficulty | 8% | Hard but fair, smooth progression |
+| Retention | 10% | Variable rewards, "one more game" |
+| App Store Compliance | 2% | Privacy, universal, guidelines |
+
+**Quality Levels:**
+- 61-75%: Good (3.5-4 stars)
+- 76-85%: Great (4-4.5 stars, top 500)
+- 86-90%: Excellent (4.5+ stars, **top 100**)
+- 91-95%: Outstanding (App Store featured)
+- 96-100%: Masterpiece (Game of the Year)
 
 ### Auto-Priority
 

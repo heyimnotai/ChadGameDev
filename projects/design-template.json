@@ -1,5 +1,5 @@
 {
-  "version": "1.0",
+  "version": "2.0",
   "projectName": "",
   "created": "",
   "lastUpdated": "",
@@ -15,7 +15,8 @@
       }
     ],
     "targetAudience": "Who is this game for",
-    "uniqueHook": "What makes this game special"
+    "uniqueHook": "What makes this game special",
+    "appStoreCategory": "Games > [subcategory]"
   },
 
   "completionThreshold": 85,
@@ -25,97 +26,130 @@
   "categories": {
     "coreLoop": {
       "name": "Core Loop",
-      "description": "Main gameplay mechanics, what the player does repeatedly",
+      "description": "Fundamental gameplay mechanics - what players do repeatedly. Must be inherently satisfying.",
       "score": 0,
-      "weight": 20,
+      "weight": 18,
+      "relatedSkills": ["core-loop-architect", "session-designer"],
+      "requirements": [],
+      "implemented": [],
+      "notes": ""
+    },
+    "controlsInput": {
+      "name": "Controls & Input",
+      "description": "Touch responsiveness, gesture recognition, input latency. Must feel instant.",
+      "score": 0,
+      "weight": 10,
+      "relatedSkills": ["swiftui-game-ui"],
       "requirements": [],
       "implemented": [],
       "notes": ""
     },
     "visualPolish": {
-      "name": "Visual Polish",
-      "description": "Animations, particles, juice, screen effects",
+      "name": "Visual Polish & Juice",
+      "description": "Animations, particles, screen shake, easing. Every action must feel satisfying.",
       "score": 0,
-      "weight": 15,
+      "weight": 12,
+      "relatedSkills": ["juice-orchestrator", "animation-system", "particle-effects", "screen-shake-impact"],
       "requirements": [],
       "implemented": [],
       "notes": ""
     },
-    "audio": {
-      "name": "Audio",
-      "description": "Sound effects, background music, audio feedback",
+    "audioDesign": {
+      "name": "Audio Design",
+      "description": "Sound effects, background music, audio ducking, spatial audio. Mute must work.",
       "score": 0,
-      "weight": 10,
+      "weight": 8,
+      "relatedSkills": ["audio-designer"],
+      "requirements": [],
+      "implemented": [],
+      "notes": ""
+    },
+    "hapticFeedback": {
+      "name": "Haptic Feedback",
+      "description": "iOS Taptic Engine usage - impacts, notifications, selections. Must enhance, not annoy.",
+      "score": 0,
+      "weight": 6,
+      "relatedSkills": ["haptic-optimizer"],
       "requirements": [],
       "implemented": [],
       "notes": ""
     },
     "uiUx": {
-      "name": "UI/UX",
-      "description": "Menus, HUD, feedback, flow, onboarding",
+      "name": "UI/UX Design",
+      "description": "Menus, HUD, transitions, accessibility. Must follow iOS HIG where appropriate.",
       "score": 0,
-      "weight": 15,
+      "weight": 10,
+      "relatedSkills": ["ui-transitions", "swiftui-game-ui"],
+      "requirements": [],
+      "implemented": [],
+      "notes": ""
+    },
+    "onboarding": {
+      "name": "Onboarding & Tutorial",
+      "description": "First-time user experience. Learn by doing, not reading. 30 seconds to fun.",
+      "score": 0,
+      "weight": 6,
+      "relatedSkills": ["onboarding-architect"],
       "requirements": [],
       "implemented": [],
       "notes": ""
     },
     "performance": {
       "name": "Performance",
-      "description": "60fps, no lag, smooth animations, memory",
+      "description": "60fps on ALL devices (iPhone SE to Pro Max). No frame drops, memory leaks, or battery drain.",
       "score": 0,
       "weight": 10,
+      "relatedSkills": ["performance-optimizer"],
       "requirements": [],
       "implemented": [],
       "notes": ""
     },
-    "difficulty": {
+    "difficultyBalance": {
       "name": "Difficulty & Balance",
-      "description": "Progression curve, challenge, fairness",
+      "description": "Progression curve, challenge scaling, fairness. Hard but never unfair.",
+      "score": 0,
+      "weight": 8,
+      "relatedSkills": ["difficulty-tuner", "progression-system"],
+      "requirements": [],
+      "implemented": [],
+      "notes": ""
+    },
+    "retentionAddiction": {
+      "name": "Retention & Addiction",
+      "description": "Session hooks, variable rewards, 'one more game' factor. Respects player time.",
       "score": 0,
       "weight": 10,
+      "relatedSkills": ["retention-engineer", "reward-scheduler", "dopamine-optimizer"],
       "requirements": [],
       "implemented": [],
       "notes": ""
     },
-    "retention": {
-      "name": "Retention & Addiction",
-      "description": "Hooks, rewards, session design, 'one more game'",
+    "appStoreCompliance": {
+      "name": "App Store Compliance",
+      "description": "Review guidelines, privacy manifest, required metadata, universal app support.",
       "score": 0,
-      "weight": 15,
-      "requirements": [],
-      "implemented": [],
-      "notes": ""
-    },
-    "codeQuality": {
-      "name": "Code Quality",
-      "description": "Clean, maintainable, no bugs, proper patterns",
-      "score": 0,
-      "weight": 5,
+      "weight": 2,
+      "relatedSkills": ["app-store-review", "privacy-manifest", "universal-app-requirements"],
       "requirements": [],
       "implemented": [],
       "notes": ""
     }
   },
 
-  "features": [
-    {
-      "id": "feature-001",
-      "name": "Feature name",
-      "description": "What this feature does",
-      "category": "coreLoop",
-      "priority": "P0",
-      "status": "pending",
-      "implementedIn": null
+  "qualityBar": {
+    "description": "What each score level means - 90% is App Store top 100 quality",
+    "levels": {
+      "0-20": "Broken or missing - not functional",
+      "21-40": "Prototype - works but feels amateur",
+      "41-60": "Functional - acceptable indie quality",
+      "61-75": "Good - solid mobile game, would get 3.5-4 stars",
+      "76-85": "Great - polished, would get 4-4.5 stars, top 500 in category",
+      "86-90": "Excellent - highly polished, would get 4.5+ stars, top 100 in category",
+      "91-95": "Outstanding - App Store featured quality, comparable to top studios",
+      "96-100": "Masterpiece - Game of the Year contender, industry-leading polish"
     }
-  ],
+  },
 
-  "iterationHistory": [
-    {
-      "iteration": 1,
-      "timestamp": "",
-      "focusCategory": "coreLoop",
-      "changes": [],
-      "scoresAfter": {}
-    }
-  ]
+  "features": [],
+  "iterationHistory": []
 }

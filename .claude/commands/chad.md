@@ -844,40 +844,50 @@ For each category in design.json:
 **Category Mapping:**
 | User Mentions | Category |
 |---------------|----------|
-| gameplay, mechanics, controls, rules | coreLoop |
-| animations, particles, effects, juice, visuals | visualPolish |
-| sounds, music, audio, SFX | audio |
-| menus, buttons, HUD, score display, tutorial | uiUx |
-| smooth, fast, 60fps, no lag | performance |
-| levels, progression, challenge, balance | difficulty |
-| addictive, rewards, hooks, session | retention |
-| clean code, refactor, bugs | codeQuality |
+| gameplay, mechanics, rules, core | coreLoop |
+| touch, tap, swipe, gestures, controls, input | controlsInput |
+| animations, particles, effects, juice, visuals, shake | visualPolish |
+| sounds, music, audio, SFX, mute | audioDesign |
+| haptics, vibration, taptic, feedback | hapticFeedback |
+| menus, buttons, HUD, score display, UI | uiUx |
+| tutorial, onboarding, first time, learn | onboarding |
+| smooth, fast, 60fps, performance, lag, battery | performance |
+| levels, progression, challenge, balance, difficulty | difficultyBalance |
+| addictive, rewards, hooks, session, retention | retentionAddiction |
+| app store, review, privacy, universal | appStoreCompliance |
 
-### Step 2: Scoring Rubric (Be Realistic)
+### Step 2: Scoring Rubric (App Store Quality Standards)
 
-**Score each category 0-100 based on these criteria:**
+**90% = Top 100 in App Store category. Be brutally honest.**
 
 ```
-0-20%   : Not started or fundamentally broken
-21-40%  : Basic implementation, major issues
-41-60%  : Functional but rough, needs polish
-61-80%  : Good implementation, minor issues
-81-90%  : Polished, meets most requirements
-91-100% : Exceptional, exceeds requirements
+0-20%   : Broken or missing - not functional
+21-40%  : Prototype - works but feels amateur
+41-60%  : Functional - acceptable indie quality
+61-75%  : Good - solid mobile game, 3.5-4 stars
+76-85%  : Great - polished, 4-4.5 stars, top 500 in category
+86-90%  : Excellent - highly polished, 4.5+ stars, top 100 in category
+91-95%  : Outstanding - App Store featured quality, top studio level
+96-100% : Masterpiece - Game of the Year contender
 ```
 
-**Category-Specific Scoring:**
+**11 Categories (weights sum to 100):**
 
-| Category | 40% (Functional) | 70% (Good) | 90% (Polished) |
-|----------|------------------|------------|----------------|
-| Core Loop | Basic mechanic works | Feels responsive | Feels great, no edge cases |
-| Visual Polish | Static sprites | Some animations | Juice everywhere, particles |
-| Audio | No audio | Basic SFX | Full audio, music, ducking |
-| UI/UX | Placeholder UI | Styled UI | Smooth transitions, feedback |
-| Performance | Runs | 30fps stable | 60fps, no hitches |
-| Difficulty | Single difficulty | Some progression | Smooth curve, balanced |
-| Retention | No hooks | Basic scoring | Rewards, hooks, addiction |
-| Code Quality | Works | Readable | Clean, patterns, no bugs |
+| Category | Weight | 60% (Functional) | 75% (Good) | 90% (Top 100) |
+|----------|--------|------------------|------------|---------------|
+| Core Loop | 18% | Mechanic works | Feels good | Inherently satisfying, "one more" |
+| Controls & Input | 10% | Touch works | Responsive | Instant, precise, delightful |
+| Visual Polish | 12% | Basic anims | Smooth easing | Juice on everything, particles |
+| Audio Design | 8% | Basic SFX | Good sounds | Full audio, music, ducking |
+| Haptic Feedback | 6% | Some haptics | Appropriate | Enhances every interaction |
+| UI/UX Design | 10% | Functional UI | Styled, clear | Smooth transitions, intuitive |
+| Onboarding | 6% | Tutorial text | Learn by play | 30 sec to fun, no friction |
+| Performance | 10% | 30fps | 45fps stable | **60fps ALL devices, no drops** |
+| Difficulty & Balance | 8% | One difficulty | Progression | Perfect curve, hard but fair |
+| Retention | 10% | Score tracking | Some hooks | Variable rewards, addiction |
+| App Store Compliance | 2% | Builds | Metadata | Privacy, universal, guidelines |
+
+**Performance is non-negotiable:** Must maintain 60fps on iPhone SE through Pro Max. Any frame drops = max 70%.
 
 ### Step 3: Calculate Overall Score
 
@@ -886,9 +896,10 @@ overallScore = 0
 for each category:
   overallScore += (category.score * category.weight / 100)
 
-// Weights must sum to 100
-// Default weights: coreLoop=20, visualPolish=15, audio=10,
-// uiUx=15, performance=10, difficulty=10, retention=15, codeQuality=5
+// Weights sum to 100:
+// coreLoop=18, controlsInput=10, visualPolish=12, audioDesign=8,
+// hapticFeedback=6, uiUx=10, onboarding=6, performance=10,
+// difficultyBalance=8, retentionAddiction=10, appStoreCompliance=2
 ```
 
 ### Step 4: Select Next Focus (Lowest Score)
@@ -896,16 +907,37 @@ for each category:
 **Priority algorithm:**
 
 ```
-1. Find category with LOWEST score
+1. Find category with LOWEST score that has unlocked dependencies
 2. If tie, prefer higher weight category
-3. If still tie, prefer order: coreLoop > retention > uiUx > visualPolish > difficulty > performance > audio > codeQuality
+3. If still tie, use priority order (see below)
 4. Focus next iteration(s) on this category
 ```
 
-**But respect dependencies:**
-- coreLoop must be ≥40% before focusing on visualPolish
-- coreLoop must be ≥40% before focusing on audio
-- uiUx must be ≥30% before focusing on retention
+**Priority Order (when tied):**
+```
+coreLoop > controlsInput > performance > retentionAddiction >
+uiUx > visualPolish > difficultyBalance > audioDesign >
+hapticFeedback > onboarding > appStoreCompliance
+```
+
+**Dependency Chain (must reach threshold before unlocking):**
+```
+coreLoop ≥50% ──┬──► controlsInput
+                ├──► visualPolish
+                ├──► audioDesign
+                └──► hapticFeedback
+
+controlsInput ≥40% ──► performance (can't optimize what doesn't work)
+
+uiUx ≥40% ──► onboarding (need UI to teach)
+
+coreLoop ≥60% ──┬──► difficultyBalance
+                └──► retentionAddiction
+
+ALL categories ≥60% ──► appStoreCompliance (polish before compliance)
+```
+
+**Always available:** coreLoop, uiUx (no dependencies)
 
 ### Step 5: Iteration Loop
 
@@ -914,21 +946,27 @@ for each category:
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │  EXTENSIVE DESIGN - Iteration [N]                                            │
-│  Overall: [X]% | Target: [threshold]%                                        │
+│  Overall: [X]% | Target: [threshold]% | Quality: [level name]                │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  Category Scores:                                                            │
-│  ████████████░░░░░░░░ Core Loop:      60%                                   │
-│  ██████░░░░░░░░░░░░░░ Visual Polish:  30%  ← FOCUS                          │
-│  ████░░░░░░░░░░░░░░░░ Audio:          20%                                   │
-│  ████████████████░░░░ UI/UX:          80%                                   │
-│  ██████████████░░░░░░ Performance:    70%                                   │
-│  ████████████░░░░░░░░ Difficulty:     60%                                   │
-│  ██████████░░░░░░░░░░ Retention:      50%                                   │
-│  ████████████████████ Code Quality:   100%                                  │
+│  Category Scores (90% = Top 100 App Store):                                  │
+│                                                                              │
+│  ████████████░░░░░░░░ Core Loop (18%):      60%                             │
+│  ██████████░░░░░░░░░░ Controls (10%):       50%                             │
+│  ██████░░░░░░░░░░░░░░ Visual Polish (12%):  30%  ← FOCUS                    │
+│  ████░░░░░░░░░░░░░░░░ Audio (8%):           20%  🔒 needs coreLoop 50%      │
+│  ░░░░░░░░░░░░░░░░░░░░ Haptics (6%):         0%   🔒 needs coreLoop 50%      │
+│  ████████████████░░░░ UI/UX (10%):          80%                             │
+│  ████████░░░░░░░░░░░░ Onboarding (6%):      40%  🔒 needs uiUx 40%          │
+│  ██████████████░░░░░░ Performance (10%):    70%  ⚠️  Must be 60fps ALL      │
+│  ████████████░░░░░░░░ Difficulty (8%):      60%                             │
+│  ██████████░░░░░░░░░░ Retention (10%):      50%                             │
+│  ░░░░░░░░░░░░░░░░░░░░ Compliance (2%):      0%   🔒 needs all 60%           │
 └─────────────────────────────────────────────────────────────────────────────┘
 
-Working on: Visual Polish
-Target requirements:
+Working on: Visual Polish (lowest unlocked)
+Related skills: juice-orchestrator, animation-system, particle-effects
+
+Target requirements from design.json:
   - [ ] Add particle effects to coin collection
   - [ ] Add screen shake on impact
   - [ ] Animate score number changes
