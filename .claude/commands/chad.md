@@ -766,7 +766,115 @@ Time Elapsed: [duration]
 ═══════════════════════════════════════════════════════════════════════════════
 ```
 
-Then proceed to normal completion flow (auto-ship, etc.)
+Then proceed to **CONTINUE OR END** prompt.
+
+---
+
+## CONTINUE OR END (After Any Focus Completes)
+
+**After ANY focus mode completes (iterations done, tasklist complete, bug fixed), prompt:**
+
+```json
+{
+  "questions": [{
+    "question": "What would you like to do next?",
+    "header": "Continue",
+    "multiSelect": false,
+    "options": [
+      {"label": "Complete TaskList", "description": "Work through remaining tasks"},
+      {"label": "Auto-improve", "description": "Let Chad analyze and improve"},
+      {"label": "Fix a bug", "description": "Describe a specific bug to fix"},
+      {"label": "Add a feature", "description": "Describe a feature to implement"},
+      {"label": "More juice", "description": "Polish animations, particles, effects"},
+      {"label": "End session", "description": "Stop and save progress"}
+    ]
+  }]
+}
+```
+
+**If "End session":** Proceed to auto-ship and completion output.
+
+**If any other option:**
+1. Ask for iteration count (if applicable)
+2. **Run context cleanup** (see below)
+3. Continue with new focus
+
+---
+
+## CONTEXT MANAGEMENT
+
+**Problem:** After many iterations, context gets crowded and performance degrades.
+
+**Solution:** Checkpoint and summarize every 5 iterations or when switching focus.
+
+### Checkpoint System
+
+**After every 5 iterations OR when focus changes:**
+
+```
+1. Write checkpoint to projects/[name]/sessions/[session]/checkpoint.json:
+   {
+     "iteration": 15,
+     "timestamp": "ISO",
+     "entitiesState": "summary of current game entities",
+     "recentChanges": ["last 3 changes made"],
+     "openIssues": ["current issues"],
+     "nextPriority": "what to focus on next"
+   }
+
+2. Print context summary:
+   ═══════════════════════════════════════════════════════════════
+   █ CHECKPOINT [iteration 15]
+   ═══════════════════════════════════════════════════════════════
+
+   Recent: [3 most recent changes]
+   Status: [current game state summary]
+   Next: [priority for next iterations]
+
+   Context optimized. Continuing...
+   ═══════════════════════════════════════════════════════════════
+
+3. For internal processing, FORGET detailed iteration history.
+   Only retain:
+   - Current game code (App.tsx)
+   - Last checkpoint summary
+   - patches.json (learned fixes)
+   - Current focus/goal
+```
+
+### When Focus Changes
+
+**When user selects new focus after completion:**
+
+```
+1. Save final state of previous focus to checkpoint
+2. Clear iteration-specific memory
+3. Re-read current App.tsx (fresh view)
+4. Read checkpoint.json for context
+5. Start new focus with clean context
+```
+
+### What to KEEP in Context
+
+| Keep | Forget |
+|------|--------|
+| Current App.tsx code | Old versions of code |
+| Current checkpoint summary | Individual iteration reports |
+| patches.json fixes | Screenshot analysis details |
+| User's current goal | Previous focus discussions |
+| Open issues list | Resolved issue details |
+
+### What to Write to Files (Not Context)
+
+| File | Content |
+|------|---------|
+| `checkpoint.json` | Current state summary |
+| `progress.log` | Full iteration history |
+| `patches.json` | Learned fixes |
+| `known-issues.json` | Open bugs |
+| `tasklist.md` | Task completion status |
+
+**The AI should read from files, not remember everything.**
 
 ---
 
@@ -1061,6 +1169,37 @@ Overall: [PASS - Ready to ship / ISSUES FOUND - See known-issues.json]
 ## WHEN LOOP COMPLETES
 
 After all [N] iterations AND final comprehensive test:
+
+### Step 0: Prompt to Continue or End
+
+**ALWAYS ask before ending:**
+
+```json
+{
+  "questions": [{
+    "question": "Iterations complete! What would you like to do?",
+    "header": "Next",
+    "multiSelect": false,
+    "options": [
+      {"label": "More iterations", "description": "Continue improving (select count)"},
+      {"label": "Complete TaskList", "description": "Work through tasklist.md"},
+      {"label": "Fix a bug", "description": "Describe a specific bug"},
+      {"label": "Add a feature", "description": "Describe a feature"},
+      {"label": "End session", "description": "Save and finish"}
+    ]
+  }]
+}
+```
+
+**If NOT "End session":**
+1. Run context checkpoint (save state, clear old details)
+2. Ask for iteration count if needed
+3. Continue with selected focus
+4. Loop back here when done
+
+**If "End session":** Continue to Step 1 below.
+
+---
 
 ### Step 1: Update project.json
 
