@@ -1,167 +1,68 @@
 ---
 name: game-preview
-description: Generate HTML5 game previews from SpriteKit/SwiftUI concepts for rapid visual iteration
-triggers:
-  - preview game
-  - generate preview
-  - show me the game
-  - visualize
+description: Use when previewing Expo games in browser for visual testing. Triggers on preview generation, game visualization, or preparing for screenshots.
 ---
 
-# Game Preview Skill
+# Game Preview
 
-Generate browser-based game previews that approximate native iOS SpriteKit/SwiftUI rendering for rapid visual feedback during development.
+## Purpose
 
-## Overview
+Preview Expo React Native games through device-selector.html wrapper with iPhone frame, dev menu, and proper safe areas.
 
-This skill translates iOS game concepts into HTML5 Canvas code that runs in the preview template. The preview renders in a realistic iPhone frame with:
-- Dynamic Island
-- Status bar (time, signal, battery)
-- Home indicator
-- Touch interaction support
-- Debug overlay (FPS, game state, score)
+## Critical Rule
 
-## Rendering Primitives
+**NEVER navigate directly to localhost:8082.**
 
-### Available Classes (game-renderer.js)
-
-| iOS Concept | Preview Equivalent |
-|-------------|-------------------|
-| SKSpriteNode | SpriteNode |
-| SKShapeNode | ShapeNode |
-| SKLabelNode | LabelNode |
-| SKAction | Action |
-| SKScene | Scene |
-| CGPoint | Vector2 |
-| UIColor/Color | Color |
-| SKPhysicsBody | PhysicsBody |
-| SKEmitterNode | ParticleEmitter |
-
-### Color System
-
-Use iOS system colors:
+Always use device-selector.html:
 ```javascript
-Color.red, Color.blue, Color.green, Color.yellow,
-Color.orange, Color.purple, Color.pink, Color.cyan,
-Color.mint, Color.teal, Color.indigo, Color.gray,
-Color.white, Color.black, Color.clear
+mcp__playwright__browser_resize({ width: 900, height: 950 })
+mcp__playwright__browser_navigate({ url: "http://localhost:8083/device-selector.html" })
+mcp__playwright__browser_evaluate({
+  function: "() => window.chadDeviceSelector.setGameUrl('http://localhost:8082')"
+})
 ```
 
-Or create custom:
-```javascript
-new Color(r, g, b, a)  // 0-1 range
-Color.fromHex('#FF5733')
-```
+## Core Process
 
-## Creating a Preview
+1. Ensure Expo dev server running on port 8082
+2. Navigate to device-selector.html (port 8083)
+3. Set game URL via `setGameUrl()`
+4. Wait 1-2 seconds for render
+5. Screenshot "iPhone Simulator" element
 
-### Step 1: Write Game Code
-
-Create `preview/game.js` with your game logic:
+## Dev Menu Commands
 
 ```javascript
-// REQUIRED: Reset any previous game state before creating new game
-if (window.preview && window.preview.resetGameState) {
-    window.preview.resetGameState();
-}
-
-class MyGame {
-    constructor() {
-        this.scene = new Scene({
-            width: GameRenderer.SCREEN_WIDTH,
-            height: GameRenderer.SCREEN_HEIGHT
-        });
-        this.scene.backgroundColor = Color.black;
-        this.score = 0;
-        this.setupGame();
-    }
-
-    setupGame() {
-        // Create game objects using SpriteNode, ShapeNode, LabelNode
-    }
-
-    update(deltaTime) {
-        this.scene.update(deltaTime);
-        // Game logic here
-    }
-
-    render(ctx, width, height) {
-        this.scene.render(ctx, width, height);
-    }
-
-    handleTouch(type, x, y) {
-        // type: 'began', 'moved', 'ended'
-    }
-
-    getScore() { return this.score; }
-    getObjectCount() { return this.scene.children.length; }
-    restart() { /* Reset game state */ }
-    reset() { /* Full reset */ }
-    cleanup() { /* Called before switching to new game - clear intervals/timeouts */ }
-}
-
-window.gameInstance = new MyGame();
+window.chadDeviceSelector.resetGame()     // Reset state
+window.chadDeviceSelector.triggerWin()    // Test win
+window.chadDeviceSelector.triggerLose()   // Test lose
+window.chadDeviceSelector.toggleDebug()   // Debug overlay
 ```
 
-### Step 2: Include in Preview
+## Screen Dimensions
 
-Add script tag to index.html before closing body:
-```html
-<script src="game.js"></script>
-```
+| Metric | Value |
+|--------|-------|
+| Canvas (3x) | 1179 x 2556 |
+| Logical | 393 x 852 |
+| Safe area top | 162px |
+| Safe area bottom | 102px |
 
-### Step 3: View Preview
-
-Open `preview/index.html` in browser or use Playwright.
-
-## Screen Coordinates
-
-- Canvas resolution: 1179 x 2556 (3x Retina)
-- Logical resolution: 393 x 852
-- Safe area top: 162px (below Dynamic Island)
-- Safe area bottom: 102px (above Home Indicator)
-
-## Actions (Animations)
+## Screenshots
 
 ```javascript
-// Move
-Action.moveTo(new Vector2(x, y), duration)
-Action.moveBy(new Vector2(dx, dy), duration)
-
-// Scale
-Action.scaleTo(scale, duration)
-
-// Fade
-Action.fadeIn(duration)
-Action.fadeOut(duration)
-
-// Rotate
-Action.rotateTo(angle, duration)  // radians
-Action.rotateBy(delta, duration)
-
-// Sequence
-Action.sequence([action1, action2, ...])
-
-// Repeat
-Action.repeatForever(action)
-
-// Timing functions
-action.timingFunction = Action.easeIn
-action.timingFunction = Action.easeOut
-action.timingFunction = Action.easeInOut
+mcp__playwright__browser_snapshot()  // Get refs
+mcp__playwright__browser_take_screenshot({
+  element: "iPhone Simulator",
+  ref: "[ref from snapshot]",
+  filename: "[game]/preview.png"
+})
 ```
 
-## Best Practices
+See `references/rendering-api.md` for game object classes.
+See `references/expo-go-testing.md` for physical device testing.
 
-1. **Match iOS patterns**: Use the same class structure you'd use in SpriteKit
-2. **Test touch targets**: Ensure tappable areas are at least 44pt (132px at 3x)
-3. **Check safe areas**: Don't place critical UI under Dynamic Island or Home Indicator
-4. **Use debug overlay**: Toggle it on to monitor FPS and game state
-5. **Take screenshots**: Use the screenshot button or `preview.canvas.toDataURL()`
+## Adjacent Skills
 
-## Output Format
-
-When generating a preview, output:
-1. The complete game.js file
-2. Any required asset references
-3. Instructions to view (typically `open preview/index.html`)
+- **visual-testing**: Capture and analyze screenshots
+- **chad-optimizer**: Full optimization cycle

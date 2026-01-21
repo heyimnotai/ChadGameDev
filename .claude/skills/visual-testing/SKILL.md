@@ -1,157 +1,88 @@
 ---
 name: visual-testing
-description: Use Playwright to capture and analyze screenshots from game previews
-triggers:
-  - capture screenshot
-  - analyze visuals
-  - check rendering
-  - visual test
+description: Use when capturing and analyzing game screenshots for quality assessment. Triggers on visual testing, screenshot capture, layout verification, or rendering checks.
 ---
 
-# Visual Testing Skill
+# Visual Testing
 
-Capture screenshots from game previews using Playwright MCP and analyze them for visual quality, layout issues, and optimization opportunities.
+## Purpose
 
-## Overview
+Capture screenshots via Playwright MCP and analyze for visual quality, layout issues, and iOS compliance.
 
-This skill uses Playwright MCP to:
-1. Open the game preview in a browser
-2. Capture screenshots at specific game states
-3. Analyze the visual output
-4. Report issues and recommendations
+## Core Process
 
-## Prerequisites
+1. **Setup**: Navigate to device-selector.html (never direct to game)
+2. **Wait**: 1-2 seconds for render
+3. **Snapshot**: Get element refs
+4. **Capture**: Screenshot "iPhone Simulator" element
+5. **Analyze**: Check against quality checklist
+6. **Report**: Document findings with severity
 
-- Playwright MCP server configured in `.mcp.json`
-- Preview HTML file at `preview/index.html`
-- Game code at `preview/game.js`
+## Screenshot Workflow
 
-## Workflow
+```javascript
+// 1. Setup
+mcp__playwright__browser_resize({ width: 900, height: 950 })
+mcp__playwright__browser_navigate({ url: "http://localhost:8083/device-selector.html" })
+mcp__playwright__browser_evaluate({
+  function: "() => window.chadDeviceSelector.setGameUrl('http://localhost:8082')"
+})
 
-### Step 1: Navigate to Preview
+// 2. Wait for render
+mcp__playwright__browser_wait_for({ time: 2 })
 
+// 3. Get refs and capture
+mcp__playwright__browser_snapshot()
+mcp__playwright__browser_take_screenshot({
+  element: "iPhone Simulator",
+  ref: "[ref]",
+  filename: "[game]/test.png"
+})
 ```
-Use mcp__playwright__browser_navigate to open:
-file://${PWD}/preview/index.html
-```
-
-### Step 2: Wait for Render
-
-Wait 1-2 seconds for the game to initialize and render the first frame.
-
-### Step 3: Capture Screenshot
-
-```
-Use mcp__playwright__browser_screenshot to capture the current state
-```
-
-### Step 4: Interact (Optional)
-
-```
-Use mcp__playwright__browser_click to simulate taps
-Coordinates should be within the iPhone screen area (centered in viewport)
-```
-
-### Step 5: Capture After Interaction
-
-Take additional screenshots to verify state changes.
 
 ## Analysis Checklist
 
-When analyzing screenshots, check for:
+### P0: iOS Safe Area (Check First)
 
-### Layout Issues
-- [ ] Content respects safe areas (not under Dynamic Island/Home Indicator)
-- [ ] Text is readable at intended size
-- [ ] Touch targets appear large enough (44pt minimum)
-- [ ] Elements are properly centered/aligned
-- [ ] No visual clipping or overflow
+| Zone | System UI | Requirement |
+|------|-----------|-------------|
+| Top 59px | Status bar, Dynamic Island | Game HUD BELOW this |
+| Bottom 34px | Home indicator | Buttons ABOVE this |
+
+### Layout
+- Content respects safe areas
+- Touch targets ≥44pt (132px at 3x)
+- Elements properly aligned
+- No clipping/overflow
 
 ### Visual Quality
-- [ ] Colors are vibrant and match iOS aesthetic
-- [ ] Shapes have appropriate corner radii
-- [ ] Text uses system fonts where appropriate
-- [ ] Animations appear smooth (check multiple frames)
-- [ ] No visual artifacts or glitches
+- Colors match iOS aesthetic
+- Text readable at size
+- Animations smooth (60fps)
+- No artifacts/glitches
 
 ### Game State
-- [ ] Score displays correctly
-- [ ] UI elements update properly
-- [ ] Game objects render at correct positions
-- [ ] Particle effects appear as expected
-- [ ] Background renders correctly
+- Score displays correctly
+- UI updates properly
+- Objects at correct positions
 
-### Accessibility
-- [ ] Sufficient color contrast
-- [ ] Text size appropriate for mobile
-- [ ] Interactive elements clearly distinguishable
-
-## Screenshot Comparison
-
-For iterative optimization, capture screenshots at these states:
-
-1. **Initial load**: First frame after game starts
-2. **Idle state**: Game waiting for input
-3. **Active gameplay**: During action
-4. **Score update**: After scoring event
-5. **Game over**: End state
-
-## Reporting Format
-
-After analysis, report:
+## Report Format
 
 ```markdown
-## Visual Test Results
-
-### Screenshot: [description]
-
+## Visual Test: [description]
 **Status**: PASS / NEEDS_ATTENTION / FAIL
 
-**Observations**:
-- [What looks correct]
-- [What needs improvement]
+**Issues**:
+- [Severity] [Issue]: [Fix needed]
 
-**Recommendations**:
-1. [Specific change to make]
-2. [Another improvement]
-
-**Measurements**:
-- FPS: [observed]
-- Object count: [from debug overlay]
-- Touch responsiveness: [observation]
+**Working**:
+- [Feature that's correct]
 ```
 
-## Common Issues & Fixes
+See `references/common-issues.md` for fixes.
 
-| Issue | Cause | Fix |
-|-------|-------|-----|
-| Elements under Dynamic Island | Incorrect Y positioning | Add SafeArea.top (162px) offset |
-| Tiny touch targets | Scale too small | Increase hit area to 132px minimum |
-| Blurry text | Wrong font size | Use multiples of 3 for 3x Retina |
-| Jerky animations | Low FPS | Reduce object count or simplify render |
-| Color mismatch | RGB vs sRGB | Use Color class system colors |
+## Adjacent Skills
 
-## Integration with Chad Loop
-
-This skill is typically used as part of the optimization cycle:
-
-1. **Generate** preview with game-preview skill
-2. **Capture** screenshot with visual-testing skill
-3. **Analyze** output and identify issues
-4. **Fix** issues based on recommendations
-5. **Repeat** until quality gates pass
-
-## Automated Testing Script
-
-For CI/CD integration, use this pattern:
-
-```javascript
-// test-visual.js
-const tests = [
-    { name: 'initial', wait: 1000 },
-    { name: 'after-tap', action: 'click', x: 195, y: 500, wait: 500 },
-    { name: 'game-over', wait: 5000 }
-];
-
-// Run via Playwright, capture each state, compare with baselines
-```
+- **game-preview**: Generate preview first
+- **chad-optimizer**: Full optimization cycle
+- **verification-before-completion**: Verify before claiming done
