@@ -1,5 +1,5 @@
 ---
-description: Run full Chad Loop optimization cycle - visualize, analyze, fix, repeat
+description: Run full ChadGameLoop optimization cycle - visualize, analyze, fix, repeat
 allowed-tools:
   - Read
   - Write
@@ -17,7 +17,7 @@ allowed-tools:
 
 # Optimize Command
 
-Run the full Chad Loop optimization cycle to iteratively improve game visuals and gameplay.
+Run the full ChadGameLoop optimization cycle to iteratively improve game visuals and gameplay.
 
 ## Usage
 
@@ -30,7 +30,7 @@ Run the full Chad Loop optimization cycle to iteratively improve game visuals an
 - `--iterations`: Maximum optimization iterations (default: 5)
 - `--focus`: Specific area to focus on (layout, performance, visuals, gameplay)
 
-## The Chad Loop Cycle
+## The ChadGameLoop Cycle
 
 ```
 ┌────────────────────────────────────────────────────┐
@@ -39,7 +39,10 @@ Run the full Chad Loop optimization cycle to iteratively improve game visuals an
 │         ▲                              │          │
 │         └──────────────────────────────┘          │
 │                                                    │
-│    Repeat until quality gates pass                │
+│    Repeat until:                                  │
+│    - All iterations complete, OR                  │
+│    - All scores 90+ (truly polished), OR          │
+│    - User requests stop                           │
 │                                                    │
 └────────────────────────────────────────────────────┘
 ```
@@ -60,14 +63,35 @@ Create todo list for tracking:
 
 ### Step 2: Visualize
 
-Open preview and capture screenshot:
-```
-mcp__playwright__browser_navigate
-url: file://${PWD}/preview/index.html
+Open device selector and capture screenshot of the iPhone frame only:
 
-# Wait for render
-mcp__playwright__browser_screenshot
+```javascript
+// 1. Resize browser for device selector
+mcp__playwright__browser_resize({ width: 900, height: 950 })
+
+// 2. Navigate to device selector
+mcp__playwright__browser_navigate({ url: "http://localhost:8083/device-selector.html" })
+
+// 3. Set game URL (assumes Expo running on 8082)
+mcp__playwright__browser_evaluate({
+  function: "() => window.chadDeviceSelector.setGameUrl('http://localhost:8082')"
+})
+
+// 4. Wait for game to load
+mcp__playwright__browser_wait_for({ time: 2 })
+
+// 5. Get element refs with snapshot
+mcp__playwright__browser_snapshot()
+
+// 6. Screenshot the full device frame (use ref from snapshot for "iPhone Simulator")
+mcp__playwright__browser_take_screenshot({
+  element: "iPhone Simulator",
+  ref: "[ref from snapshot]",
+  filename: "[game-name]/iter-01.png"  // Saved to .playwright-mcp/
+})
 ```
+
+**IMPORTANT:** Always screenshot the "iPhone Simulator" element to see full device context.
 
 ### Step 3: Analyze
 
@@ -151,13 +175,35 @@ Capture new screenshot and compare:
 
 ### Step 7: Iterate or Complete
 
-If gates pass → Complete optimization
-If gates fail → Return to Step 2 with remaining issues
+**⚠️ ITERATION ENFORCEMENT ⚠️**
+
+```
+If iterations remaining AND scores < 90 → Return to Step 2
+If ALL scores reach 90+ → Offer early exit (game is polished)
+If all iterations complete → Complete optimization
+If user requests stop → Complete optimization
+```
+
+**Early exit allowed when:**
+- All quality scores reach 90+ (truly polished)
+- User explicitly requests to stop
+- Critical blocker prevents progress
+- 3 consecutive iterations with no meaningful improvement
+
+**If scores are 70-85 with iterations remaining:**
+- ASK user before stopping, don't assume
+
+**After each iteration, report:**
+```
+Iteration 3/10 complete
+Remaining: 7 iterations
+Next focus: [lowest scoring category]
+```
 
 ## Output Format
 
 ```markdown
-## Chad Loop Optimization Report
+## ChadGameLoop Optimization Report
 
 ### Session Summary
 - **Iterations**: 3
@@ -203,6 +249,23 @@ If gates fail → Return to Step 2 with remaining issues
 
 1. **One fix at a time** - Easier to verify and debug
 2. **Take screenshots liberally** - Visual history helps
-3. **Don't over-optimize** - Stop when gates pass
+3. **Complete ALL iterations** - User selected the count deliberately
 4. **Document everything** - Future you will thank you
-5. **Know when to stop** - Diminishing returns after ~5 iterations
+5. **Higher counts = deeper work** - 20 iterations means AAA polish, not rushed work
+
+## ⚠️ Iteration Enforcement
+
+**Basic quality gates (60-80) do NOT mean stop.** The selected iteration count is a commitment:
+
+| Iterations | Expectation | Early Exit Threshold |
+|------------|-------------|---------------------|
+| 5 | Quick pass - fix obvious issues | 85+ all scores |
+| 10 | Thorough - fix all issues, add polish | 90+ all scores |
+| 20 | Perfection - multiple passes | 90+ all scores |
+
+**Early exit allowed when:**
+- ALL scores reach 90+ (offer to user, don't force exit)
+- User explicitly requests to stop
+- Critical blocker or no improvements after 3 attempts
+
+**Each iteration must make substantive progress.** Don't rush through with token changes.

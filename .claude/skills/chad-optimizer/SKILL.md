@@ -1,9 +1,9 @@
 ---
 name: chad-optimizer
-description: Use when running the full Chad Loop optimization cycle. Triggers on game optimization, visual iteration, or quality gate verification.
+description: Use when running the full ChadGameLoop optimization cycle. Triggers on game optimization, visual iteration, or quality gate verification.
 ---
 
-# Chad Optimizer
+# ChadGameLoop Optimizer
 
 ## Purpose
 

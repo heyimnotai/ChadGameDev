@@ -71,7 +71,7 @@ git commit -m "feat(game): add tap-the-circle gameplay
 - Add score tracking and display
 - Include particle effects on successful tap
 
-Chad Loop iterations: 3
+ChadGameLoop iterations: 3
 Quality gates: All passing"
 ```
 
@@ -93,7 +93,7 @@ git push -u origin [branch-name]
 
 <body - what changed and why>
 
-Chad Loop iterations: <n>
+ChadGameLoop iterations: <n>
 Quality gates: <status>
 ```
 
