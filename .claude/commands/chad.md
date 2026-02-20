@@ -1,4 +1,4 @@
-# /chad - Visual Chad Loop
+# /chad - ChadGameLoop
 
 ## STRICT INSTRUCTION: DO NOT IMPROVISE QUESTIONS
 

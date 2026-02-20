@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "description": "Visual Chad Loop configuration for game development",
+  "description": "ChadGameLoop configuration for iOS game development",
 
   "iteration": {
     "maxIterations": 10,

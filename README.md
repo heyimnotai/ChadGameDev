@@ -1,10 +1,10 @@
-# Visual Chad Loop - Autonomous Game Development
+# ChadGameLoop - Autonomous iOS Game Development
 
-An AI-powered game development framework that uses visual feedback loops to autonomously build and polish iOS games. Based on the Chad Loop methodology, extended with multimodal screenshot analysis and self-prompting capabilities.
+An AI-powered game development framework that uses visual feedback loops to autonomously build and polish iOS games. Extends the Ralph Wiggum methodology with multimodal screenshot analysis and self-prompting capabilities specifically for game development.
 
 ## What is This?
 
-Traditional [Chad](https://github.com/frankbria/chad-claude-code) uses typecheck/tests as feedback signals. **Visual Chad** uses screenshot analysis - Claude looks at the game, identifies issues, writes its own fix instructions, and iterates until quality gates pass.
+The traditional [Ralph Wiggum technique](https://github.com/frankbria/ralph-claude-code) uses typecheck/tests as feedback signals. **ChadGameLoop** adapts this for game development using screenshot analysis - Claude looks at the game, identifies issues, writes its own fix instructions, and iterates until quality gates pass.
 
 ```
 User Prompt → Generate Code → Preview → Screenshot → Analyze → Self-Prompt → Fix → Repeat
@@ -26,8 +26,8 @@ User Prompt → Generate Code → Preview → Screenshot → Analyze → Self-Pr
 ### Step 1: Clone and Install Dependencies
 
 ```bash
-git clone https://github.com/heyimnotai/VisualChadLoop.git
-cd VisualChadLoop
+git clone https://github.com/heyimnotai/ChadGameDev.git
+cd ChadGameDev
 npm install
 npx playwright install chromium
 ```
@@ -51,14 +51,18 @@ sudo apt-get update && sudo apt-get install -y \
 ### Step 3: Verify Setup
 
 ```bash
-# Test that screenshots work
+# Test that screenshots work (uses device-selector.html with Expo game at localhost:8082)
+# Note: In Docker, the HTTP server for device-selector runs on port 8083
 node scripts/capture-screenshot.js \
-  "file://$(pwd)/preview/index.html" \
+  "http://localhost:8083/device-selector.html" \
   "screenshots/test.png" \
-  1000
+  2000 \
+  "http://localhost:8082"
 ```
 
 You should see: `Screenshot saved: screenshots/test.png`
+
+**IMPORTANT:** Always use device-selector.html wrapper via HTTP (port 8083), never navigate directly to game URL.
 
 ### Step 4: Run Claude Code
 
@@ -77,7 +81,7 @@ Then run:
 ## Quick Start
 
 ```bash
-# Run the Chad loop (interactive mode)
+# Run the ChadGameLoop (interactive mode)
 /chad
 
 # Or use the commands separately
@@ -101,7 +105,7 @@ Then run:
 ## Project Structure
 
 ```
-GameSkillsFrameWork/
+ChadGameDev/
 ├── CLAUDE.md                    # Main documentation
 ├── SYSTEM_BREAKDOWN.md          # Architecture details
 ├── patches.md                   # Problem→Solution knowledge base
@@ -120,7 +124,7 @@ GameSkillsFrameWork/
 │   │   ├── build.md           # /build - iOS build
 │   │   ├── test-ios.md        # /test-ios - Simulator test
 │   │   └── push.md            # /push - Git commit
-│   └── skills/                 # 4 Chad skills
+│   └── skills/                 # 4 ChadGameLoop skills
 │       ├── game-preview/
 │       ├── visual-testing/
 │       ├── chad-optimizer/
@@ -139,12 +143,12 @@ GameSkillsFrameWork/
 │   ├── game-renderer.js       # SpriteKit-like abstractions
 │   └── game.js                # Current game code
 │
-└── screenshots/               # Captured during Chad loops
+└── screenshots/               # Captured during ChadGameLoop cycles
 ```
 
 ## The Patch System
 
-When Chad encounters a problem and solves it, the solution is documented:
+When ChadGameLoop encounters a problem and solves it, the solution is documented:
 
 ```markdown
 ## PATCH-002: Particles Not Visible
@@ -226,7 +230,7 @@ pkill -f chromium; pkill -f chrome
 
 Check for JavaScript errors:
 ```bash
-node scripts/capture-screenshot.js "file://$(pwd)/preview/index.html" test.png 2000
+node scripts/capture-screenshot.js "http://localhost:8083/device-selector.html" test.png 2000 "http://localhost:8082"
 ```
 Then check `test-console.txt` for errors.
 
@@ -236,12 +240,62 @@ Make sure `.mcp.json` has `PLAYWRIGHT_HEADLESS` set to `true`. The system uses h
 
 ---
 
-## Inspiration
+## Inspiration & References
 
-- [Chad Wiggum Technique](https://dev.to/sivarampg/the-chad-wiggum-approach-running-ai-coding-agents-for-hours-not-minutes-57c1) by Geoffrey Huntley
-- [Ryan Carson's Chad Guide](https://x.com/ryancarson) - Step-by-step breakdown
-- [chad-claude-code](https://github.com/frankbria/chad-claude-code) - Original implementation
+This project builds upon and extends several foundational works:
+
+### The Ralph Wiggum Methodology
+- **[Geoffrey Huntley](https://ghuntley.com/ralph/)** - Creator of the Ralph Wiggum technique for autonomous AI agents
+  - [Ralph Wiggum as a "software engineer"](https://ghuntley.com/ralph/) - Original concept and explanation
+  - [VentureBeat Article](https://venturebeat.com/technology/how-ralph-wiggum-went-from-the-simpsons-to-the-biggest-name-in-ai-right-now) - Origins and impact
+  - [Brief History of Ralph](https://www.humanlayer.dev/blog/brief-history-of-ralph) - Evolution timeline
+  - [Inventing the Ralph Wiggum Loop](https://devinterrupted.substack.com/p/inventing-the-ralph-wiggum-loop-creator) - Creator interview
+  - [Mastering Ralph loops](https://linearb.io/blog/ralph-loop-agentic-engineering-geoffrey-huntley) - Technical deep dive
+
+- **Key Ralph Implementations:**
+  - [snarktank/ralph](https://github.com/snarktank/ralph) - Autonomous AI agent loop that runs until PRD complete
+  - [ghuntley/how-to-ralph-wiggum](https://github.com/ghuntley/how-to-ralph-wiggum) - Official Ralph Wiggum technique guide
+  - [frankbria/ralph-claude-code](https://github.com/frankbria/ralph-claude-code) - Ralph loop for Claude Code with intelligent exit detection
+
+### ChadGameLoop's Adaptations
+This project adapts the Ralph Wiggum methodology specifically for game development:
+- **Replaced** typecheck/test feedback → visual screenshot analysis
+- **Added** self-prompting capabilities for autonomous iteration
+- **Specialized** with 30+ iOS game development skills
+- **Implemented** patch learning system for accumulated knowledge
+
+The name "ChadGameLoop" distinguishes this game-focused variant from the general-purpose Ralph technique.
+
+### Additional Resources
+- [Awesome Ralph](https://github.com/snwfdhmp/awesome-ralph) - Curated resources about Ralph coding technique
+- [Awesome Claude - Ralph Wiggum](https://awesomeclaude.ai/ralph-wiggum) - Community resources and examples
+- [Ralph Wiggum AI](https://ralph-wiggum.ai/) - Simplified overview
+
+---
+
+## What Makes ChadGameLoop Different?
+
+| Aspect | Ralph Wiggum (Original) | ChadGameLoop |
+|--------|------------------------|--------------|
+| **Feedback Signal** | typecheck + unit tests | Screenshot analysis (multimodal) |
+| **Prompt Source** | Human-written prompt.md | AI-generated from visual analysis |
+| **Learning Storage** | progress.txt | patches.md (problem→solution pairs) |
+| **Quality Gates** | Tests pass/fail | Visual quality gates (5 categories) |
+| **Domain** | General software | iOS game development |
+| **Skill Integration** | Generic coding | 30 specialized game development skills |
+| **Iteration Trigger** | Test failure | Visual issue detected |
+
+---
 
 ## License
 
 MIT
+
+---
+
+## Acknowledgments
+
+Special thanks to:
+- **Geoffrey Huntley** for pioneering the Ralph Wiggum methodology
+- **Frank Bria** for the ralph-claude-code implementation that inspired this project
+- The Ralph/Claude Code community for continued innovation in autonomous AI development

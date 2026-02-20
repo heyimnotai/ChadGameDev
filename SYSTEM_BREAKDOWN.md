@@ -1,16 +1,16 @@
-# Visual Chad Loop: Autonomous Game Development System
+# ChadGameLoop: Autonomous Game Development System
 
 ## Overview
 
-This system extends the Chad Loop methodology (created by Geoffrey Huntley, popularized by Ryan Carson) specifically for **game development with visual feedback**. Unlike traditional Chad which uses typecheck/tests as feedback signals, this system uses **screenshot analysis and multimodal AI** to evaluate gameplay, identify issues, and self-correct.
+This system extends the Ralph Wiggum Loop methodology (created by Geoffrey Huntley) specifically for **iOS game development with visual feedback**. Unlike traditional Ralph which uses typecheck/tests as feedback signals, this system uses **screenshot analysis and multimodal AI** to evaluate gameplay, identify issues, and self-correct.
 
 ---
 
-## How Traditional Chad Works (Reference)
+## How Traditional Ralph Wiggum Works (Reference)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  TRADITIONAL CHAD LOOP                                     │
+│  TRADITIONAL RALPH WIGGUM LOOP                             │
 │                                                             │
 │  prompt.md → AI Agent → Implement → typecheck/test          │
 │       ↑                                    │                │
@@ -29,11 +29,11 @@ Stop Condition: <promise>COMPLETE</promise>
 
 ---
 
-## Your System: Visual Chad for Games
+## ChadGameLoop Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  VISUAL CHAD LOOP FOR GAME DEVELOPMENT                                     │
+│  CHADGAMELOOP FOR iOS GAME DEVELOPMENT                                     │
 │                                                                             │
 │  User Prompt                                                                │
 │       │                                                                     │
@@ -108,16 +108,16 @@ Stop Condition: <promise>COMPLETE</promise>
 
 ---
 
-## Key Differences from Traditional Chad
+## Key Differences from Traditional Ralph Wiggum
 
-| Aspect | Traditional Chad | Visual Chad for Games |
-|--------|-------------------|------------------------|
+| Aspect | Ralph Wiggum (Original) | ChadGameLoop |
+|--------|------------------------|--------------|
 | **Feedback Signal** | typecheck + unit tests | Screenshot analysis (multimodal) |
-| **Prompt Source** | Human-written prompt.md | AI-generated from analysis |
+| **Prompt Source** | Human-written prompt.md | AI-generated from visual analysis |
 | **Learning Storage** | progress.txt | patches.md (problem→solution pairs) |
 | **Quality Gates** | Tests pass/fail | Visual quality gates (5 gates) |
-| **Domain** | General software | Game development specific |
-| **Skill Integration** | None | 30 specialized game skills |
+| **Domain** | General software | iOS game development |
+| **Skill Integration** | Generic coding | 30 specialized iOS game skills |
 | **Iteration Trigger** | Test failure | Visual issue detected |
 
 ---
@@ -217,10 +217,10 @@ After analysis, Claude generates its own prompt:
 **patches.md Structure:**
 
 ```markdown
-# Chad Patches - Game Development Knowledge Base
+# ChadGameLoop Patches - Game Development Knowledge Base
 
 ## How This File Works
-When Chad encounters a problem and solves it, the problem-solution
+When ChadGameLoop encounters a problem and solves it, the problem-solution
 pair is recorded here. Future iterations consult this file BEFORE
 attempting fixes, using proven solutions instead of guessing.
 
@@ -272,7 +272,7 @@ emitter.start(); // REQUIRED - often forgotten
 ## File Structure
 
 ```
-GameSkillsFrameWork/
+ChadGameDev/
 ├── CLAUDE.md                    # Main documentation
 ├── SYSTEM_BREAKDOWN.md          # This file
 ├── patches.md                   # Problem→Solution knowledge base (NEW)
@@ -316,7 +316,7 @@ GameSkillsFrameWork/
 
 ---
 
-## Workflow: Complete Chad Session
+## Workflow: Complete ChadGameLoop Session
 
 ### Phase 1: Initialization
 ```
@@ -371,7 +371,7 @@ System:
 Each iteration, Claude generates a prompt for the next iteration:
 
 ```markdown
-# Chad Iteration [N+1] Prompt
+# ChadGameLoop Iteration [N+1] Prompt
 
 ## Context
 - Previous iteration: [N]
@@ -489,9 +489,11 @@ If all quality gates pass, output:
 
 ## Sources & References
 
-- [Chad Claude Code GitHub](https://github.com/frankbria/chad-claude-code)
-- [Chad Wiggum Technique Explained](https://dev.to/sivarampg/the-chad-wiggum-approach-running-ai-coding-agents-for-hours-not-minutes-57c1)
-- [Awesome Claude - Chad Wiggum](https://awesomeclaude.ai/chad-wiggum)
-- [VentureBeat - Chad Wiggum AI](https://venturebeat.com/technology/how-chad-wiggum-went-from-the-simpsons-to-the-biggest-name-in-ai-right-now)
-- [Chad Loop Guide](https://mejba.me/blog/chad-loop-claude-code-autonomous-ai-coding-framework-guide)
-- [Brief History of Chad](https://www.humanlayer.dev/blog/brief-history-of-chad)
+- [Ralph Claude Code GitHub](https://github.com/frankbria/ralph-claude-code) - Frank Bria's implementation
+- [Geoffrey Huntley's Ralph](https://ghuntley.com/ralph/) - Original Ralph Wiggum concept
+- [snarktank/ralph](https://github.com/snarktank/ralph) - Autonomous agent loop
+- [Awesome Ralph](https://github.com/snwfdhmp/awesome-ralph) - Curated Ralph resources
+- [Awesome Claude - Ralph Wiggum](https://awesomeclaude.ai/ralph-wiggum) - Community resources
+- [VentureBeat - Ralph Wiggum AI](https://venturebeat.com/technology/how-ralph-wiggum-went-from-the-simpsons-to-the-biggest-name-in-ai-right-now)
+- [Brief History of Ralph](https://www.humanlayer.dev/blog/brief-history-of-ralph)
+- [Inventing the Ralph Wiggum Loop](https://devinterrupted.substack.com/p/inventing-the-ralph-wiggum-loop-creator)
