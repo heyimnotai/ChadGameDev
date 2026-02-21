@@ -1,5 +1,199 @@
 # Touch Control Optimizer - Code Patterns
 
+---
+
+## React Native / Expo Patterns (Primary Stack)
+
+These are the patterns to use in all Expo games. The Swift patterns below are for native SpriteKit reference only.
+
+### Conditional Parent Responder (Drag + Tap Coexistence)
+
+The most important pattern. The container View only claims the responder after a drag has started, so child Pressables can fire normally.
+
+```tsx
+export function DragAndSelectContainer({ children }: { children: React.ReactNode }) {
+  const [isDragging, setIsDragging] = useState(false);
+
+  return (
+    <View
+      style={StyleSheet.absoluteFill}
+      // Only intercept when a drag is already in progress
+      onStartShouldSetResponder={() => isDragging}
+      onMoveShouldSetResponder={() => isDragging}
+      onResponderMove={(e) => handleDragMove(e.nativeEvent.pageX, e.nativeEvent.pageY)}
+      onResponderRelease={handleDragEnd}
+      onResponderTerminate={handleDragEnd}
+    >
+      {children}
+    </View>
+  );
+}
+
+// Child Pressable — fires normally because parent doesn't steal idle touches
+<Pressable
+  style={styles.pieceSlot}  // always 90x90 minimum
+  onPressIn={(e) => {
+    setIsDragging(true);  // NOW the parent can intercept moves
+    startDrag(piece, e.nativeEvent.pageX, e.nativeEvent.pageY);
+  }}
+/>
+```
+
+### Piece Selector Slot (Puzzle / Block Games)
+
+The slot container is the hit target. The visual piece inside can be any size.
+
+```tsx
+const MIN_SLOT_SIZE = 90;  // never go below this
+
+function PieceSlot({ piece, onDragStart }: PieceSlotProps) {
+  const { minRow, maxRow, minCol, maxCol } = getBounds(piece.blocks);
+  const maxDim = Math.max(maxRow - minRow + 1, maxCol - minCol + 1);
+  const previewCellSize = Math.floor(70 / maxDim);  // fits inside 70pt safe zone
+  const pieceWidth = (maxCol - minCol + 1) * previewCellSize;
+  const pieceHeight = (maxRow - minRow + 1) * previewCellSize;
+
+  return (
+    <Pressable
+      // Hit target is the full slot — never size to the visual piece
+      style={{
+        width: MIN_SLOT_SIZE,
+        height: MIN_SLOT_SIZE,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#151528',
+        borderRadius: 12,
+      }}
+      onPressIn={(e) => onDragStart(piece, e.nativeEvent.pageX, e.nativeEvent.pageY)}
+    >
+      {/* Visual can be any size — the slot handles touch */}
+      <View style={{ width: pieceWidth, height: pieceHeight }}>
+        {piece.blocks.map(([r, c], i) => (
+          <View
+            key={i}
+            style={{
+              position: 'absolute',
+              left: (c - minCol) * previewCellSize,
+              top: (r - minRow) * previewCellSize,
+              width: previewCellSize - 2,
+              height: previewCellSize - 2,
+              borderRadius: 3,
+              backgroundColor: piece.color,
+            }}
+          />
+        ))}
+      </View>
+    </Pressable>
+  );
+}
+```
+
+### hitSlop for Small Buttons
+
+Use `hitSlop` whenever a tappable element is under 60pt in either dimension.
+
+```tsx
+// Pause button, close button, icon buttons
+<Pressable
+  hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
+  style={{ width: 32, height: 32 }}
+  onPress={togglePause}
+>
+  <PauseIcon />
+</Pressable>
+
+// Quick reference: hitSlop to reach minimum 44pt
+// 32pt element → hitSlop: 6 per side → 44pt effective
+// 24pt element → hitSlop: 10 per side → 44pt effective
+// 16pt element → hitSlop: 14 per side → 44pt effective
+```
+
+### Drag Overlay Pattern
+
+When dragging starts, mount a full-screen invisible overlay to reliably capture all pointer moves — avoids gaps between layout elements.
+
+```tsx
+return (
+  <View style={styles.container}>
+    {/* Game content */}
+    <GameGrid />
+    <PieceSelector onDragStart={startDrag} />
+
+    {/* Drag overlay — only mounted when dragging */}
+    {isDragging && (
+      <View
+        style={StyleSheet.absoluteFill}
+        pointerEvents="box-only"
+        onStartShouldSetResponder={() => true}
+        onMoveShouldSetResponder={() => true}
+        onResponderMove={(e) => {
+          moveDrag(e.nativeEvent.pageX, e.nativeEvent.pageY);
+        }}
+        onResponderRelease={endDrag}
+        onResponderTerminate={cancelDrag}
+      />
+    )}
+
+    {/* Dragging piece visual follows finger */}
+    {isDragging && <DraggingPiece position={dragPosition} piece={draggingPiece} />}
+  </View>
+);
+```
+
+### Grid Cell Hit Targets
+
+Grid cells in puzzle games need generous hit targets. Add padding to the grid and let cells expand to fill it.
+
+```tsx
+// ❌ WRONG — 1px gap between cells, finger lands in dead zone
+<View style={{ width: cellSize - 2, height: cellSize - 2, margin: 1 }} />
+
+// ✅ CORRECT — cell fills full slot, visual inset via borderRadius or inner View
+<View style={{ width: cellSize, height: cellSize }}>
+  <View style={{
+    flex: 1,
+    margin: 2,
+    borderRadius: 4,
+    backgroundColor: cell.color,
+  }} />
+</View>
+```
+
+### Pressable Press Feedback
+
+Always give immediate visual feedback on press — no user should wonder if their tap registered.
+
+```tsx
+<Pressable
+  style={({ pressed }) => ({
+    ...styles.button,
+    transform: [{ scale: pressed ? 0.93 : 1 }],
+    opacity: pressed ? 0.85 : 1,
+  })}
+  onPress={handlePress}
+>
+  <Text style={styles.label}>TAP ME</Text>
+</Pressable>
+```
+
+### Touch Target Audit Checklist
+
+Run this mentally before shipping any game screen:
+
+```
+□ Are ALL Pressables at least 44x44pt? (90pt for game piece slots)
+□ Does any parent View have onStartShouldSetResponder: () => true unconditionally?
+□ Do small buttons (<60pt) have hitSlop?
+□ Are piece selectors/card selectors sized to the slot, not the visual?
+□ Does pressing any interactive element give immediate visual feedback?
+□ Can you click every element without pixel-perfect accuracy?
+□ When dragging, do taps on non-dragged elements still work?
+```
+
+---
+
+## Swift / SpriteKit Patterns (Native Reference)
+
 ## Tap and Swipe Configuration
 
 ```swift

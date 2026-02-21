@@ -175,6 +175,32 @@ useEffect(() => {
 - `localStorage` / `sessionStorage`
 - `navigator.*` (except `navigator.vibrate` alternatives)
 
+### Touch Target Rules (CRITICAL — enforced every game)
+
+Bad controls are the #1 reason games feel broken. A user failing to tap something 3 times in a row destroys trust instantly. These rules are non-negotiable.
+
+**Minimum sizes:**
+- Game piece slots / card selectors: **90×90pt minimum** — size the `Pressable` to the slot, never to the visual shape inside
+- Buttons: **44×44pt minimum** (Apple HIG) — use `hitSlop` if visual is smaller
+- Any element under 60pt: must have `hitSlop: { top: 12, bottom: 12, left: 12, right: 12 }`
+
+**The parent responder rule:**
+```typescript
+// ❌ WRONG — this silently blocks ALL child Pressables
+<View onStartShouldSetResponder={() => true}>
+
+// ✅ CORRECT — only claim the responder when a drag is already active
+<View onStartShouldSetResponder={() => isDragging}>
+```
+
+**Signs controls are broken (fix immediately):**
+- User must click the exact center of a visual element to register a tap
+- Tapping a button while dragging does nothing
+- Piece selector slots only respond in one tiny spot
+- Any interactive element requires more than 1 attempt to activate
+
+See `ios-game-skills/02-core-design/touch-control-optimizer/` for full patterns.
+
 ### Standalone App Structure
 
 Each game should be a standalone app with its own dependencies:
@@ -608,10 +634,18 @@ Before shipping, ensure all gates pass:
 1. **Renders Correctly** - Game loads, all objects visible
 2. **Layout Correct** - Safe areas respected, proper alignment
 3. **Visual Quality** - Colors match, text readable, 60 FPS
-4. **Interactions Work** - Touch events register, correct feedback
+4. **Interactions Work** - Every interactive element responds on first tap, no pixel-perfect accuracy required
 5. **Audio Works** - Sound effects play, music loops
 6. **Haptics Work** - Feedback feels appropriate
 7. **Game Logic** - Score works, win/lose conditions function
+
+**Interaction Gate checklist (must ALL pass before scoring ≥90):**
+- [ ] Every Pressable / button responds without needing to tap exact center
+- [ ] Piece selectors / card selectors: slot is 90×90pt minimum
+- [ ] No `onStartShouldSetResponder={() => true}` unconditionally on any container with Pressable children
+- [ ] All buttons under 60pt have `hitSlop`
+- [ ] Dragging does not prevent tapping non-dragged elements
+- [ ] Pressing any interactive element shows immediate visual feedback (scale or color change)
 
 ### Quality Gate Scoring
 
@@ -621,7 +655,7 @@ Each category is scored 0-100. When ALL core categories reach **≥90/100**, the
 |----------|-----------|-------------|
 | Renders | 90 | Game loads and displays correctly |
 | Layout | 90 | UI elements properly positioned |
-| Interaction | 90 | Touch/controls work flawlessly |
+| Interaction | 90 | Every element responds on first tap — generous hit targets, no responder conflicts |
 | Logic | 90 | Game mechanics function correctly |
 | Polish | 90 | Animations, effects feel good |
 
